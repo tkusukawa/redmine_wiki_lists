@@ -34,8 +34,8 @@ module WikiListsRefIssue
             words.push(redirect.title); #別名
           end
           parser.searchWordsW.push(words)
-        elsif obj.class == Issue  # チケットの場合はチケット番号表記を検索ワードにする
-          parser.searchWordsW.push(['#'+obj.id.to_s]);
+        elsif obj.class == Issue  # チケットの場合はチケットsubjectを検索ワードにする
+          parser.searchWordsW.push([obj.subject]);
         elsif obj.class == Journal && obj.journalized_type == "Issue" 
           # チケットコメントの場合もチケット番号表記を検索ワードにする
           parser.searchWordsW.push(['#'+obj.journalized_id.to_s]);
