@@ -11,7 +11,8 @@ module WikiListsRefIssue
         arg=args.shift
         arg.strip!
         if arg=~/^([^:]*):([^:]*)$/ then
-          prj=Project.find_by_name($1)
+          prj=Project.find_by_identifier($1)
+          prj||=Project.find_by_name($1)
           raise "project:#{$1} is not found." unless prj
           arg=$2
         else
