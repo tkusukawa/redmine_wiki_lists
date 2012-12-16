@@ -10,5 +10,6 @@ Redmine::Plugin.register :redmine_wiki_lists do
   author 'Tomohisa Kusukawa'
   description 'wiki macros to display lists of contents.'
   version '0.0.1'
-  url 'https://bitbucket.org/kusu/redmine_wiki_lists'
+  url 'http://www.r-labs.org/projects/wiki_lists/wiki/Wiki_Lists'
+  author_url 'http://bitbucket.org/kusu'
 end
