@@ -34,7 +34,7 @@ module WikiListsRefIssue
         raise "parameter error: #{err_msg}<br>"+
           "usage: {{issue_name_link([project_name:]issue_subject[|description])}}"
       end
-      out
+      return out.html_safe
     end
   end
 end
