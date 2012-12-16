@@ -159,7 +159,7 @@ module WikiExtensionsWikiList
       end # Wikiページ毎の処理
       disp << "</table>"
 
-      disp
+      return disp.html_safe
     end
   end
 
