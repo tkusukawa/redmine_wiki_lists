@@ -53,7 +53,7 @@ module WikiExtensionsWikiList
           end
         end
       rescue => err_msg
-        raise "parameter error: #{err_msg}<br>"+
+        msg = "parameter error: #{err_msg}<br>"+
           "usage: {{wiki_list([option]*,[column]*)}}<br>"+
           "[optin]<br>"+
           "-c : search child pages<br>"+
@@ -64,6 +64,7 @@ module WikiExtensionsWikiList
           "+alias[| COLUMN_NAME] -> show page aliases<br>"+
           "KEYWORD[| COLUMN_NAME] -> scan KEYWORD and show following words to EOL<br>"+
           "KEYWORD\\TERMINATOR[| COLUMN_NAME] -> scan KEYWORD and show following words to TERMINATOR"
+        raise msg.html_safe
       end
 
       if column_keys.count==0 then

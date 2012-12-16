@@ -11,7 +11,7 @@ module WikiListsRefIssue
       begin
         parser = WikiLists::RefIssues::Parser.new args, @project
       rescue => err_msg
-        raise "parameter error: #{err_msg}<br>"+
+        msg = "parameter error: #{err_msg}<br>"+
           "[optins]<br>"+
           "-s=WORD[|WORD[|...]] : search WORDs in subject<br>"+
           "-d=WORD[|WORD[|...]] : search WORDs in description<br>"+
@@ -22,6 +22,7 @@ module WikiListsRefIssue
           "[columns]<br>"+
           "project,tracker,parent,status,priority,subject,author,assigned,updated,<br>"+
           "category,fixed_version,start_date,due_date,estimated_hours,done_ratio,created,cf_*"
+        raise msg.html_safe
       end
 
       unless parser.has_serch_conditions? # 検索条件がなにもなかったら
