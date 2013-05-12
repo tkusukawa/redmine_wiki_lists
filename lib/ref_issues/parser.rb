@@ -70,18 +70,18 @@ module WikiLists
       def query(project)
         # オプションにカスタムクエリがあればカスタムクエリを名前から取得
         if @customQueryId
-          @query = Query.find_by_id(@customQueryId);
+          @query = IssueQuery.find_by_id(@customQueryId);
           @query = nil if !@query.visible?
           raise "can not find CustomQuery ID:'#{@customQueryId}'" if !@query;
         elsif @customQueryName then
           cond = "project_id IS NULL"
           cond << " OR project_id = #{project.id}" if project
           cond = "(#{cond}) AND name = '#{@customQueryName}'";
-          @query = Query.find(:first, :conditions=>cond+" AND user_id=#{User.current.id}")
-          @query = Query.find(:first, :conditions=>cond+" AND is_public=TRUE") if !@query
+          @query = IssueQuery.find(:first, :conditions=>cond+" AND user_id=#{User.current.id}")
+          @query = IssueQuery.find(:first, :conditions=>cond+" AND is_public=TRUE") if !@query
           raise "can not find CustomQuery Name:'#{@customQueryName}'" if !@query;
         else
-          @query = Query.new(:name => "_", :filters => {});
+          @query = IssueQuery.new(:name => "_", :filters => {});
         end
       
         # Queryモデルを拡張
