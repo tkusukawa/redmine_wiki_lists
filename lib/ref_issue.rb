@@ -51,6 +51,7 @@ module WikiListsRefIssue
       extend SortHelper
       extend QueriesHelper
       extend IssuesHelper
+      sort_clear
       sort_init(@query.sort_criteria.empty? ? [['id', 'desc']] : @query.sort_criteria);
       sort_update(@query.sortable_columns);
       @issue_count_by_group = @query.issue_count_by_group;
