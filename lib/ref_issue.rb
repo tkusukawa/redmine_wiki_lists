@@ -19,6 +19,7 @@ module WikiListsRefIssue
           "-i=CustomQueryID : specify custom query<br>"+
           "-q=CustomQueryName : specify custom query<br>"+
           "-p[=identifier] : restrict project<br>"+
+          "-f:FILTER[=WORD[|WORD]] : additional filter<br>"
           "[columns]<br>"+
           "project,tracker,parent,status,priority,subject,author,assigned,updated,<br>"+
           "category,fixed_version,start_date,due_date,estimated_hours,done_ratio,created,cf_*"
@@ -27,23 +28,7 @@ module WikiListsRefIssue
 
       unless parser.has_serch_conditions? # 検索条件がなにもなかったら
         # 検索するキーワードを取得する
-        if obj.class == WikiContent  # Wikiの場合はページ名および別名を検索ワードにする
-          words = []
-          words.push(obj.page.title); #ページ名
-          redirects = WikiRedirect.find(:all, :conditions=>["redirects_to=:s", {:s=>obj.page.title}]); #別名query
-          redirects.each do |redirect|
-            words.push(redirect.title); #別名
-          end
-          parser.searchWordsW.push(words)
-        elsif obj.class == Issue  # チケットの場合はチケットsubjectを検索ワードにする
-          parser.searchWordsW.push([obj.subject]);
-        elsif obj.class == Journal && obj.journalized_type == "Issue" 
-          # チケットコメントの場合もチケット番号表記を検索ワードにする
-          parser.searchWordsW.push(['#'+obj.journalized_id.to_s]);
-        else
-          # チケットでもWikiでもない場合はどうしていいかわからないので帰る。
-          return;
-        end
+        parser.searchWordsW << parser.defaultWords(obj)
       end
       
       @query = parser.query @project
@@ -67,7 +52,17 @@ module WikiListsRefIssue
       parser.searchWordsW.each do |words|
         @query.add_filter("subjectdescription","~", words)
       end
-      
+
+      parser.additionalFilter.each do |filterString|
+        if filterString=~/^([^\=]+)\=([^\=]+)$/
+          filter = $1
+          values = $2.split('|')
+          @query.add_filter(filter, '=', values)
+        else
+          @query.add_filter(filterString, '=', parser.defaultWords(obj))
+        end
+      end
+
       @query.column_names = parser.columns unless parser.columns.empty?
 
       @issues = @query.issues(:order => sort_clause, 

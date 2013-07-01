@@ -9,7 +9,7 @@ module WikiLists
         :start_date, :due_date, :estimated_hours, :done_ratio, :created_on]
       
       attr_reader :searchWordsS, :searchWordsD, :searchWordsW, :columns,
-        :customQueryName, :customQueryId
+        :customQueryName, :customQueryId, :additionalFilter
       def initialize(args = nil, project = nil)
         parse_args args, project if args
       end
@@ -21,41 +21,48 @@ module WikiLists
         @searchWordsW = []
         @columns = []
         @restrictProject = nil
+        @additionalFilter = []
         args.each do |arg|
           arg.strip!;
-          if arg=~/^\-([^\=]*)(\=.*)?$/
+          if arg=~/^\-([^\=:]*)([\=:].*)?$/
             case $1
-            when 's','sw','Dw','sDw','Dsw'              
-              @searchWordsS.push get_words(arg)
-            when 'd','dw','Sw','Sdw','dSw'             
-              @searchWordsD.push get_words(arg)
-            when 'w','sdw'              
-              @searchWordsW.push get_words(arg)
-            when 'q'
-              if arg=~/^[^\=]+\=(.*)$/
-                @customQueryName = $1;
+              when 's','sw','Dw','sDw','Dsw'
+                @searchWordsS.push get_words(arg)
+              when 'd','dw','Sw','Sdw','dSw'
+                @searchWordsD.push get_words(arg)
+              when 'w','sdw'
+                @searchWordsW.push get_words(arg)
+              when 'q'
+                if arg=~/^[^\=]+\=(.*)$/
+                  @customQueryName = $1;
+                else
+                  raise "no CustomQuery name:#{arg}"
+                end
+              when 'i'
+                if arg=~/^[^\=]+\=(.*)$/
+                  @customQueryId = $1;
+                else
+                  raise "no CustomQuery ID:#{arg}"
+                end
+              when 'p'
+                if arg=~/^[^\=]+\=(.*)$/
+                  @restrictProject = Project.find $1;
+                else
+                  @restrictProject = project
+                end
+              when 'f'
+                if arg=~/^[^\:]+\:(.*)$/
+                  @additionalFilter << $1
+                else
+                  raise "no additional filter:#{arg}"
+                end
               else
-                raise "no CustomQuery name:#{arg}"
-              end
-            when 'i'
-              if arg=~/^[^\=]+\=(.*)$/
-                @customQueryId = $1;
-              else
-                raise "no CustomQuery ID:#{arg}"
-              end
-            when 'p'
-              if arg=~/^[^\=]+\=(.*)$/
-                @restrictProject = Project.find $1;
-              else
-                @restrictProject = project
-              end
-            else
-              raise "unknown option:#{arg}"
+                raise "unknown option:#{arg}"
             end
           else
-            @columns << get_column(arg)            
+            @columns << get_column(arg)
           end
-        end        
+        end
       end
       
       def has_serch_conditions?
@@ -95,7 +102,24 @@ module WikiLists
         
         @query
       end
-        
+
+      def defaultWords(obj)
+        words = []
+        if obj.class == WikiContent  # Wikiの場合はページ名および別名を検索ワードにする
+          words.push(obj.page.title); #ページ名
+          redirects = WikiRedirect.find(:all, :conditions=>["redirects_to=:s", {:s=>obj.page.title}]); #別名query
+          redirects.each do |redirect|
+            words << redirect.title #別名
+          end
+        elsif obj.class == Issue  # チケットの場合はチケットsubjectを検索ワードにする
+          words << obj.subject
+        elsif obj.class == Journal && obj.journalized_type == "Issue"
+          # チケットコメントの場合もチケット番号表記を検索ワードにする
+          words << '#'+obj.journalized_id.to_s
+        end
+        words
+      end
+
       private
         
       def get_words(arg)
@@ -144,6 +168,6 @@ module WikiLists
           return sql
         end
       end
-    end    
+    end
   end
 end
