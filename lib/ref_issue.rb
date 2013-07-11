@@ -9,20 +9,25 @@ module WikiListsRefIssue
       parser = nil
       
       begin
-        parser = WikiLists::RefIssues::Parser.new args, @project
+        parser = WikiLists::RefIssues::Parser.new obj, args, @project
       rescue => err_msg
+        attributes = obj.attributes.keys
         msg = "parameter error: #{err_msg}<br>"+
           "[optins]<br>"+
-          "-s=WORD[|WORD[|...]] : search WORDs in subject<br>"+
-          "-d=WORD[|WORD[|...]] : search WORDs in description<br>"+
-          "-w=WORD[|WORD[|...]] : search WORDs in subject and/or description<br>"+
+          "-s[=WORD[|WORD...]] : search WORDs in subject<br>"+
+          "-d[=WORD[|WORD...]] : search WORDs in description<br>"+
+          "-w[=WORD[|WORD...]] : search WORDs in subject and/or description<br>"+
           "-i=CustomQueryID : specify custom query<br>"+
           "-q=CustomQueryName : specify custom query<br>"+
           "-p[=identifier] : restrict project<br>"+
-          "-f:FILTER[=WORD[|WORD]] : additional filter<br>"
-          "[columns]<br>"+
-          "project,tracker,parent,status,priority,subject,author,assigned,updated,<br>"+
-          "category,fixed_version,start_date,due_date,estimated_hours,done_ratio,created,cf_*"
+          "-f:FILTER[=WORD[|WORD...]] : additional filter<br>"+
+          "-l : only link<br>" +
+          "[columns]<br>"
+        while attributes
+          msg += attributes[0...5].join(',')+',<br>'
+          attributes = attributes[5..-1]
+        end
+        msg += "cf_*"
         raise msg.html_safe
       end
 
@@ -67,11 +72,30 @@ module WikiListsRefIssue
 
       @issues = @query.issues(:order => sort_clause, 
                               :include => [:assigned_to, :tracker, :priority, :category, :fixed_version]);
-      
-      disp = context_menu(issues_context_menu_path);
-      disp << render(:partial => 'issues/list', :locals => {:issues => @issues, :query => @query});
 
-      return disp;
+      if parser.onlyLink
+        disp = String.new
+        atr = parser.columns[0].to_s
+        @issues.each do |issue|
+          if issue.attributes.has_key?(atr)
+            word = issue.attributes[atr]
+          else
+            issue.custom_field_values.each do |cf|
+              if 'cf_'+cf.custom_field.id.to_s == atr || cf.custom_field.name == atr
+                word = cf.value
+              end
+            end
+          end
+
+          disp << ', ' if disp.size!=0
+          disp << link_to("#{word}", {:controller => "issues", :action => "show", :id => issue.id})
+        end
+      else
+        disp = context_menu(issues_context_menu_path)
+        disp << render(:partial => 'issues/list', :locals => {:issues => @issues, :query => @query});
+      end
+
+      return disp.html_safe
     end
   end
 end

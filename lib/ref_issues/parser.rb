@@ -9,12 +9,12 @@ module WikiLists
         :start_date, :due_date, :estimated_hours, :done_ratio, :created_on]
       
       attr_reader :searchWordsS, :searchWordsD, :searchWordsW, :columns,
-        :customQueryName, :customQueryId, :additionalFilter
-      def initialize(args = nil, project = nil)
-        parse_args args, project if args
+        :customQueryName, :customQueryId, :additionalFilter, :onlyLink
+      def initialize(obj, args = nil, project = nil)
+        parse_args obj, args, project if args
       end
       
-      def parse_args(args, project)
+      def parse_args(obj, args, project)
         args ||= []
         @searchWordsS = []
         @searchWordsD = []
@@ -22,45 +22,70 @@ module WikiLists
         @columns = []
         @restrictProject = nil
         @additionalFilter = []
+        @onlyLink = nil
         args.each do |arg|
           arg.strip!;
-          if arg=~/^\-([^\=:]*)([\=:].*)?$/
-            case $1
-              when 's','sw','Dw','sDw','Dsw'
-                @searchWordsS.push get_words(arg)
-              when 'd','dw','Sw','Sdw','dSw'
-                @searchWordsD.push get_words(arg)
-              when 'w','sdw'
-                @searchWordsW.push get_words(arg)
-              when 'q'
-                if arg=~/^[^\=]+\=(.*)$/
-                  @customQueryName = $1;
-                else
-                  raise "no CustomQuery name:#{arg}"
-                end
-              when 'i'
-                if arg=~/^[^\=]+\=(.*)$/
-                  @customQueryId = $1;
-                else
-                  raise "no CustomQuery ID:#{arg}"
-                end
-              when 'p'
-                if arg=~/^[^\=]+\=(.*)$/
-                  @restrictProject = Project.find $1;
-                else
-                  @restrictProject = project
-                end
-              when 'f'
-                if arg=~/^[^\:]+\:(.*)$/
-                  @additionalFilter << $1
-                else
-                  raise "no additional filter:#{arg}"
-                end
-              else
-                raise "unknown option:#{arg}"
-            end
+          if arg=~/^\-([^\=:]*)([\=:])(.*)$/
+            opt = $1
+            sep = $2
+            words = $3
+          elsif arg=~/^\-([^\=:]*)$/
+            opt = $1
+            sep = nil
+            words = defaultWords(obj).join('|')
           else
             @columns << get_column(arg)
+            next
+          end
+
+          if words=~/^\[(.*)\]$/
+            atr = $1
+            if obj.attributes.has_key?(atr)
+              words = obj.attributes[atr]
+            else
+              obj.custom_field_values.each do |cf|
+                if 'cf_'+cf.custom_field.id.to_s == atr || cf.custom_field.name == atr
+                  words = cf.value
+                end
+              end
+            end
+          end
+
+          case opt
+            when 's','sw','Dw','sDw','Dsw'
+              @searchWordsS.push words.split('|')
+            when 'd','dw','Sw','Sdw','dSw'
+              @searchWordsD.push words.split('|')
+            when 'w','sdw'
+              @searchWordsW.push words.split('|')
+            when 'q'
+              if sep
+                @customQueryName = words
+              else
+                raise "no CustomQuery name:#{arg}"
+              end
+            when 'i'
+              if sep
+                @customQueryId = words
+              else
+                raise "no CustomQuery ID:#{arg}"
+              end
+            when 'p'
+              if sep
+                @restrictProject = Project.find(words)
+              else
+                @restrictProject = project
+              end
+            when 'f'
+              if sep
+                @additionalFilter << words
+              else
+                raise "no additional filter:#{arg}"
+              end
+            when 'l'
+              @onlyLink = true
+            else
+              raise "unknown option:#{arg}"
           end
         end
       end
@@ -71,6 +96,7 @@ module WikiLists
         return true if @searchWordsS and !@searchWordsS.empty?
         return true if @searchWordsD and !@searchWordsD.empty?
         return true if @searchWordsW and !@searchWordsW.empty?
+        return true if @additionalFilter and !@additionalFilter.empty?
         false
       end
       
@@ -122,14 +148,6 @@ module WikiLists
 
       private
         
-      def get_words(arg)
-        if arg=~/^[^\=]+\=(.*)$/
-          $1.split('|')
-        else
-          raise "need words divided by '|':#{arg}>"
-        end
-      end
-      
       def get_column(name)
         name_sym = name.to_sym
         return name_sym if COLUMNS.include?(name_sym)
