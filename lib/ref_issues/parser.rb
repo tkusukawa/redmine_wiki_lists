@@ -83,7 +83,11 @@ module WikiLists
                 raise "no additional filter:#{arg}"
               end
             when 'l'
-              @onlyLink = true
+              if sep
+                @onlyLink = words
+              else
+                @onlyLink = 'subject'
+              end
             else
               raise "unknown option:#{arg}"
           end

@@ -75,7 +75,7 @@ module WikiListsRefIssue
 
       if parser.onlyLink
         disp = String.new
-        atr = parser.columns[0].to_s
+        atr = parser.onlyLink
         @issues.each do |issue|
           if issue.attributes.has_key?(atr)
             word = issue.attributes[atr]
