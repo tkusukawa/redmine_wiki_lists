@@ -64,10 +64,11 @@ module WikiListsRefIssue
         if filterString=~/^([^\=]+)\=([^\=]+)$/
           filter = $1
           values = $2.split('|')
-          @query.add_filter(filter, '=', values)
+          res = @query.add_filter(filter, '=', values)
         else
-          @query.add_filter(filterString, '=', parser.defaultWords(obj))
+          res = @query.add_filter(filterString, '=', parser.defaultWords(obj))
         end
+        raise 'failed add_filter: '+filterString if res.nil?
       end
 
       @query.column_names = parser.columns unless parser.columns.empty?
