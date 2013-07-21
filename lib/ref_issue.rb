@@ -11,23 +11,25 @@ module WikiListsRefIssue
       begin
         parser = WikiLists::RefIssues::Parser.new obj, args, @project
       rescue => err_msg
-        attributes = obj.attributes.keys
-        msg = "parameter error: #{err_msg}<br>"+
+        msg = "<br>parameter error: #{err_msg}<br>"+
           "[optins]<br>"+
           "-s[=WORD[|WORD...]] : search WORDs in subject<br>"+
           "-d[=WORD[|WORD...]] : search WORDs in description<br>"+
           "-w[=WORD[|WORD...]] : search WORDs in subject and/or description<br>"+
-          "-i=CustomQueryID : specify custom query<br>"+
-          "-q=CustomQueryName : specify custom query<br>"+
+          "-i=CustomQueryID : specify custom query by id<br>"+
+          "-q=CustomQueryName : specify custom query by name<br>"+
           "-p[=identifier] : restrict project<br>"+
           "-f:FILTER[=WORD[|WORD...]] : additional filter<br>"+
-          "-l : only link<br>" +
-          "[columns]<br>"
+          "-l[=attribute] : display linked text<br>" +
+          "[columns] : {"
+        attributes = Issue.attribute_names
         while attributes
-          msg += attributes[0...5].join(',')+',<br>'
+          msg += attributes[0...5].join(',') + ', '
           attributes = attributes[5..-1]
+          msg += "<br>" if attributes
         end
-        msg += "cf_*"
+        msg += "cf_* }"
+        msg += '<br>'
         raise msg.html_safe
       end
 
