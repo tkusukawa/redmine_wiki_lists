@@ -22,14 +22,15 @@ module WikiListsRefIssue
           "-f:FILTER[=WORD[|WORD...]] : additional filter<br>"+
           "-l[=attribute] : display linked text<br>" +
           "[columns] : {"
-        attributes = Issue.attribute_names
+        attributes = IssueQuery.available_columns
         while attributes
-          msg += attributes[0...5].join(',') + ', '
+          attributes[0...5].each do |a|
+            msg += a.name.to_s + ', '
+          end
           attributes = attributes[5..-1]
           msg += "<br>" if attributes
         end
-        msg += "cf_* }"
-        msg += '<br>'
+        msg += 'cf_* }<br/>'
         raise msg.html_safe
       end
 
@@ -68,7 +69,21 @@ module WikiListsRefIssue
         else
           res = @query.add_filter(filterString, '=', parser.defaultWords(obj))
         end
-        raise 'failed add_filter: '+filterString if res.nil?
+        if res.nil?
+          msg =  "<br/>failed add_filter: #{filterString}<br/>" +
+                 '[FILTER] : {'
+          cr_count = 0
+          @query.available_filters.each do |k,f|
+            if cr_count >= 5
+              msg += '<br/>'
+              cr_count = 0
+            end
+            msg += k.to_s + ', '
+            cr_count += 1
+          end
+          msg += '}<br/>'
+          raise msg.html_safe
+        end
       end
 
       @query.column_names = parser.columns unless parser.columns.empty?
