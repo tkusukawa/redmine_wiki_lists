@@ -26,7 +26,7 @@ module WikiListsRefIssue
           disp=arg
         end
         cond="project_id=#{prj.id} AND subject='#{name}'"
-        issue = Issue.find(:first, :conditions=>cond)
+        issue = Issue.where(cond).first
         raise "issue:#{name} is not found in prj:#{prj.to_s}" unless issue
         Issue.find_by_subject(name)
         out << link_to("#{disp}", {:controller => "issues", :action => "show", :id => issue.id})
