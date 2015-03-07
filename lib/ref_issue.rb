@@ -94,6 +94,7 @@ module WikiListsRefIssue
       if parser.onlyLink
         disp = String.new
         atr = parser.onlyLink
+        word = ''
         @issues.each do |issue|
           if issue.attributes.has_key?(atr)
             word = issue.attributes[atr]
@@ -103,6 +104,14 @@ module WikiListsRefIssue
                 word = cf.value
               end
             end
+          end
+          if word == ''
+            msg = '-l:[attributes]<br/>attributes:'
+            issue.attributes.each do |a|
+              msg += a.to_s + ', '
+            end
+            raise msg.html_safe
+            break
           end
 
           disp << ', ' if disp.size!=0

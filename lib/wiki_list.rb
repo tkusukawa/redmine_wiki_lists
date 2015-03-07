@@ -84,9 +84,7 @@ module WikiExtensionsWikiList
       disp << "</tr>"
 
       # Wikiページの抽出
-      wiki_pages = WikiPage.find(:all,
-        :joins=>joins,
-        :conditions=>cond)
+      wiki_pages = WikiPage.joins(joins).where(cond).all
       wiki_pages.each do |wiki_page| #---------------- Wikiページ毎の処理
         next if !wiki_page.visible?
         # 1ページに抽出キーワードが複数あった場合に複数行表示するため一旦表示行を配列に記憶する
@@ -100,8 +98,7 @@ module WikiExtensionsWikiList
               :project_id => wiki_page.project, :id => wiki_page.title)
             WikiExtensionsWikiList.set_lines(lines_by_page, column_num, html)
           when '+alias' # Wikiページの別名
-            redirects = WikiRedirect.find(:all, 
-              :conditions=>"wiki_id = #{wiki_page.wiki_id} AND redirects_to = '#{wiki_page.title}'")
+            redirects = WikiRedirect.where("wiki_id = #{wiki_page.wiki_id} AND redirects_to = '#{wiki_page.title}'").all
             html=''
             redirects.each do |redirect|
               html << '<br>' if html!=''
