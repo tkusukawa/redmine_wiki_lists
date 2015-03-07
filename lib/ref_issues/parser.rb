@@ -108,14 +108,14 @@ module WikiLists
         # オプションにカスタムクエリがあればカスタムクエリを名前から取得
         if @customQueryId
           @query = IssueQuery.find_by_id(@customQueryId);
-          @query = nil if !@query.visible?
+          @query = nil if @query && !@query.visible?
           raise "can not find CustomQuery ID:'#{@customQueryId}'" if !@query;
         elsif @customQueryName then
           cond = "project_id IS NULL"
           cond << " OR project_id = #{project.id}" if project
           cond = "(#{cond}) AND name = '#{@customQueryName}'";
           @query = IssueQuery.where(cond+" AND user_id=#{User.current.id}").first
-          @query = IssueQuery.where(cond+" AND is_public=TRUE").first if !@query
+          @query = IssueQuery.where(cond+" AND visibility = ?", Query::VISIBILITY_PUBLIC).first if !@query
           raise "can not find CustomQuery Name:'#{@customQueryName}'" if !@query;
         else
           @query = IssueQuery.new(:name => "_", :filters => {});
