@@ -105,7 +105,27 @@ module WikiListsRefIssue
             msg += k.to_s + ', '
             cr_count += 1
           end
+          models.each do |k, m|
+            if cr_count >= 5
+              msg += '<br/>'
+              cr_count = 0
+            end
+            msg += k.to_s + ', '
+            cr_count += 1
+          end
           msg += '}<br/>'
+
+          msg += '[OPERATOR] : {'
+          cr_count = 0
+          Query.operators_labels.each do |k, l|
+            if cr_count >= 5
+              msg += '<br/>'
+              cr_count = 0
+            end
+            msg += k + ':' + l + ', '
+            cr_count += 1
+          end
+
           raise msg.html_safe
         end
       end
