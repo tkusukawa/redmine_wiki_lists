@@ -9,7 +9,7 @@ module WikiLists
         :start_date, :due_date, :estimated_hours, :done_ratio, :created_on]
       
       attr_reader :searchWordsS, :searchWordsD, :searchWordsW, :columns,
-        :customQueryName, :customQueryId, :additionalFilter, :onlyLink
+        :customQueryName, :customQueryId, :additionalFilter, :onlyLink, :countFlag
       def initialize(obj, args = nil, project = nil)
         parse_args obj, args, project if args
       end
@@ -23,6 +23,7 @@ module WikiLists
         @restrictProject = nil
         @additionalFilter = []
         @onlyLink = nil
+        @countFlag = nil
         args.each do |arg|
           arg.strip!;
           if arg=~/^\-([^\=:]*)([\=:])(.*)$/
@@ -88,6 +89,8 @@ module WikiLists
               else
                 @onlyLink = 'subject'
               end
+            when 'c'
+              @countFlag = true
             else
               raise "unknown option:#{arg}"
           end

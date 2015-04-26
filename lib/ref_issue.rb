@@ -21,6 +21,7 @@ module WikiListsRefIssue
           "-p[=identifier] : restrict project<br>"+
           "-f:FILTER[=WORD[|WORD...]] : additional filter<br>"+
           "-l[=attribute] : display linked text<br>" +
+          "-c : count issues<br>" +
           "[columns] : {"
         attributes = IssueQuery.available_columns
         while attributes
@@ -61,14 +62,37 @@ module WikiListsRefIssue
         @query.add_filter("subjectdescription","~", words)
       end
 
+      models = {"tracker"=>Tracker,"category"=>IssueCategory,"status"=>IssueStatus,"assigned_to"=>User,"version"=>Version, "project"=>Project}
+      ids = {"tracker"=>"tracker_id","category"=>"category_id","status"=>"status_id","assigned_to"=>"assigned_to_id","version"=>"fixed_version_id","project"=>"project_id"}
+      attributes = {"tracker"=>"name","category"=>"name","status"=>"name","assigned_to"=>"login","version"=>"name","project"=>"name"}
+
       parser.additionalFilter.each do |filterString|
-        if filterString=~/^([^\=]+)\=([^\=]+)$/
+        filter = ''
+        operator = ''
+        values = nil
+        if filterString=~/^([^ ]*) ([^ ]*)$/
           filter = $1
+          operator = $2
+        elsif filterString=~/^([^ ]*) ([^ ]*) ([^ ]*)$/
+          filter = $1
+          operator = $2
+          values = $3.split('|')
+        elsif filterString=~/^(.*)=(.*)$/
+          filter = $1
+          operator = "="
           values = $2.split('|')
-          res = @query.add_filter(filter, '=', values)
         else
-          res = @query.add_filter(filterString, '=', parser.defaultWords(obj))
+          filter = filterString
+          operator = "="
+          values = parser.defaultWords(obj)
         end
+        if models.has_key?(filter)
+          tgtObj = models[filter].find_by attributes[filter]=>values.first
+          filter = ids[filter]
+          values = [tgtObj.id.to_s]
+        end
+
+        res = @query.add_filter(filter , operator, values)
         if res.nil?
           msg =  "<br/>failed add_filter: #{filterString}<br/>" +
                  '[FILTER] : {'
@@ -117,6 +141,8 @@ module WikiListsRefIssue
           disp << ', ' if disp.size!=0
           disp << link_to("#{word}", {:controller => "issues", :action => "show", :id => issue.id})
         end
+      elsif parser.countFlag
+        disp = @issues.size.to_s
       else
         disp = context_menu(issues_context_menu_path)
         disp << render(:partial => 'issues/list', :locals => {:issues => @issues, :query => @query});
