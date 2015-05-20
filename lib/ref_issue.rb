@@ -20,6 +20,7 @@ module WikiListsRefIssue
           "-q=CustomQueryName : specify custom query by name<br>"+
           "-p[=identifier] : restrict project<br>"+
           "-f:FILTER[=WORD[|WORD...]] : additional filter<br>"+
+          "-t[=attribute] : display text<br>" +
           "-l[=attribute] : display linked text<br>" +
           "-c : count issues<br>" +
           "[columns] : {"
@@ -135,9 +136,10 @@ module WikiListsRefIssue
       @issues = @query.issues(:order => sort_clause, 
                               :include => [:assigned_to, :tracker, :priority, :category, :fixed_version]);
 
-      if parser.onlyLink
+      if parser.onlyText || parser.onlyLink
         disp = String.new
-        atr = parser.onlyLink
+        atr = parser.onlyText if parser.onlyText
+        atr = parser.onlyLink if parser.onlyLink
         word = ''
         @issues.each do |issue|
           if issue.attributes.has_key?(atr)
@@ -150,7 +152,7 @@ module WikiListsRefIssue
             end
           end
           if word == ''
-            msg = '-l:[attributes]<br/>attributes:'
+            msg = 'attributes:'
             issue.attributes.each do |a|
               msg += a.to_s + ', '
             end
@@ -158,8 +160,12 @@ module WikiListsRefIssue
             break
           end
 
-          disp << ', ' if disp.size!=0
-          disp << link_to("#{word}", {:controller => "issues", :action => "show", :id => issue.id})
+          disp << ' ' if disp.size!=0
+          if parser.onlyLink
+            disp << link_to("#{word}", {:controller => "issues", :action => "show", :id => issue.id})
+          else
+            disp << textilizable(word)
+          end
         end
       elsif parser.countFlag
         disp = @issues.size.to_s
