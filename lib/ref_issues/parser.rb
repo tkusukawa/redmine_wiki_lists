@@ -137,6 +137,7 @@ module WikiLists
         @query.available_filters["subjectdescription"] = { :type => :text, :order => 8 };
         @query.available_filters["fixed_version_id"] = { :type => :int};
         @query.available_filters["category_id"] = { :type => :int};
+        @query.available_filters["parent_id"] = { :type => :int};
 
         if @restrictProject
           @query.project = @restrictProject
