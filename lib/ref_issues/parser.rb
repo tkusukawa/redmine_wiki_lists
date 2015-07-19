@@ -4,10 +4,7 @@
 module WikiLists
   module RefIssues
     class Parser
-      COLUMNS = [:project, :tracker, :parent, :status, :priority, :subject,
-        :author, :assigned_to, :updated_on, :category, :fixed_version, 
-        :start_date, :due_date, :estimated_hours, :done_ratio, :created_on]
-      
+
       attr_reader :searchWordsS, :searchWordsD, :searchWordsW, :columns,
         :customQueryName, :customQueryId, :additionalFilter, :onlyText, :onlyLink, :countFlag
       def initialize(obj, args = nil, project = nil)
@@ -167,7 +164,9 @@ module WikiLists
         
       def get_column(name)
         name_sym = name.to_sym
-        return name_sym if COLUMNS.include?(name_sym)
+        IssueQuery.available_columns.each do |col|
+          return name_sym if name_sym == col.name.to_sym
+        end
         return :assigned_to if name_sym == :assigned
         return :updated_on if name_sym == :updated
         return :created_on if name_sym == :created
