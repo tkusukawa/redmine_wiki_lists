@@ -140,10 +140,10 @@ module WikiListsRefIssue
         disp = String.new
         atr = parser.onlyText if parser.onlyText
         atr = parser.onlyLink if parser.onlyLink
-        word = ''
+        word = nil
         @issues.each do |issue|
           if issue.attributes.has_key?(atr)
-            word = issue.attributes[atr]
+            word = issue.attributes[atr].to_s
           else
             issue.custom_field_values.each do |cf|
               if 'cf_'+cf.custom_field.id.to_s == atr || cf.custom_field.name == atr
@@ -151,7 +151,7 @@ module WikiListsRefIssue
               end
             end
           end
-          if word == ''
+          if word.nil?
             msg = 'attributes:'
             issue.attributes.each do |a|
               msg += a.to_s + ', '
