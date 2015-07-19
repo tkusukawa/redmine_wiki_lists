@@ -71,10 +71,10 @@ module WikiListsRefIssue
         filter = ''
         operator = ''
         values = nil
-        if filterString=~/^([^ ]*) ([^ ]*)$/
+        if filterString=~/^([^ ]*) +([^ ]*)$/
           filter = $1
           operator = $2
-        elsif filterString=~/^([^ ]*) ([^ ]*) ([^ ]*)$/
+        elsif filterString=~/^([^ ]*) +([^ ]*) +(.*)$/
           filter = $1
           operator = $2
           values = $3.split('|')
@@ -87,8 +87,27 @@ module WikiListsRefIssue
           operator = "="
           values = parser.defaultWords(obj)
         end
+
+        values.collect! do |v|
+          v.strip!
+          if v =~ /^\[(.*)\]$/
+            atr = $1
+            if obj.attributes.has_key?(atr)
+              v = obj.attributes[atr]
+            else
+              obj.custom_field_values.each do |cf|
+                if 'cf_'+cf.custom_field.id.to_s == atr || cf.custom_field.name == atr
+                  v = cf.value
+                end
+              end
+            end
+          end
+          v.to_s
+        end
+
         if models.has_key?(filter)
           tgtObj = models[filter].find_by attributes[filter]=>values.first
+          raise "can not resolve '#{values.first}' in #{models[filter].to_s}.#{attributes[filter]} " if tgtObj.nil?
           filter = ids[filter]
           values = [tgtObj.id.to_s]
         end
