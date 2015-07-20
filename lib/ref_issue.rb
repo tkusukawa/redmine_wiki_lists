@@ -183,7 +183,7 @@ module WikiListsRefIssue
           if parser.onlyLink
             disp << link_to("#{word}", {:controller => "issues", :action => "show", :id => issue.id})
           else
-            disp << textilizable(word)
+            disp << textilizable(word, :object=>issue)
           end
         end
       elsif parser.countFlag
