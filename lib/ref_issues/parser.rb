@@ -37,26 +37,13 @@ module WikiLists
             next
           end
 
-          if words=~/^\[(.*)\]$/
-            atr = $1
-            if obj.attributes.has_key?(atr)
-              words = obj.attributes[atr]
-            else
-              obj.custom_field_values.each do |cf|
-                if 'cf_'+cf.custom_field.id.to_s == atr || cf.custom_field.name == atr
-                  words = cf.value
-                end
-              end
-            end
-          end
-
           case opt
             when 's','sw','Dw','sDw','Dsw'
-              @searchWordsS.push words.split('|')
+              @searchWordsS.push words_to_word_array(obj, words)
             when 'd','dw','Sw','Sdw','dSw'
-              @searchWordsD.push words.split('|')
+              @searchWordsD.push words_to_word_array(obj, words)
             when 'w','sdw'
-              @searchWordsW.push words.split('|')
+              @searchWordsW.push words_to_word_array(obj, words)
             when 'q'
               if sep
                 @customQueryName = words
@@ -77,7 +64,27 @@ module WikiLists
               end
             when 'f'
               if sep
-                @additionalFilter << words
+                filter = ''
+                operator = ''
+                values = nil
+                if words =~ /^([^ ]*) +([^ ]*)$/
+                  filter = $1
+                  operator = $2
+                elsif words =~ /^([^ ]*) +([^ ]*) +(.*)$/
+                  filter = $1
+                  operator = $2
+                  values = words_to_word_array(obj, $3)
+                elsif words =~ /^(.*)=(.*)$/
+                  filter = $1
+                  operator = "="
+                  values = words_to_word_array(obj, $2)
+                else
+                  filter = words
+                  operator = "="
+                  values = defaultWords(obj)
+                end
+
+                @additionalFilter << {:filter=>filter, :operator=>operator, :values=>values}
               else
                 raise "no additional filter:#{arg}"
               end
@@ -201,6 +208,63 @@ module WikiLists
 
           return sql
         end
+      end
+
+      def words_to_word_array(obj, words)
+        word_array = words.split('|').collect do |word|
+          word.strip!
+          if word =~ /^\[(.*)\]$/
+            raise "can not use reference '#{word}' except for issues." if obj.class != Issue
+            atr = $1
+            if obj.attributes.has_key?(atr)
+              word = obj.attributes[atr]
+            else
+              obj.custom_field_values.each do |cf|
+                if 'cf_'+cf.custom_field.id.to_s == atr || cf.custom_field.name == atr
+                  word = cf.value
+                end
+              end
+            end
+          end
+          word.to_s
+        end
+        word_array
+      end
+
+      def raise_filter_error(query)
+        msg =  "<br/>failed add_filter: #{filterString}<br/>" +
+            '[FILTER] : {'
+        cr_count = 0
+        query.available_filters.each do |k,f|
+          if cr_count >= 5
+            msg += '<br/>'
+            cr_count = 0
+          end
+          msg += k.to_s + ', '
+          cr_count += 1
+        end
+        models.each do |k, m|
+          if cr_count >= 5
+            msg += '<br/>'
+            cr_count = 0
+          end
+          msg += k.to_s + ', '
+          cr_count += 1
+        end
+        msg += '}<br/>'
+
+        msg += '[OPERATOR] : {'
+        cr_count = 0
+        Query.operators_labels.each do |k, l|
+          if cr_count >= 5
+            msg += '<br/>'
+            cr_count = 0
+          end
+          msg += k + ':' + l + ', '
+          cr_count += 1
+        end
+
+        raise msg.html_safe
       end
     end
   end
