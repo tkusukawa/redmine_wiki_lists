@@ -13,18 +13,16 @@ module WikiListsRefIssue
       rescue => err_msg
         msg = "<br>parameter error: #{err_msg}<br>"+
           "#{err_msg.backtrace[0]}<br><br>" +
-          "[optins]<br>"+
-          "-s[=WORD[|WORD...]] : search WORDs in subject<br>"+
-          "-d[=WORD[|WORD...]] : search WORDs in description<br>"+
-          "-w[=WORD[|WORD...]] : search WORDs in subject and/or description<br>"+
+          "usage: {{ref_issues([option].., [column]..)}}<br>" +
+          "<br>[optins]<br>"+
           "-i=CustomQueryID : specify custom query by id<br>"+
           "-q=CustomQueryName : specify custom query by name<br>"+
           "-p[=identifier] : restrict project<br>"+
           "-f:FILTER[=WORD[|WORD...]] : additional filter<br>"+
-          "-t[=attribute] : display text<br>" +
-          "-l[=attribute] : display linked text<br>" +
+          "-t[=column] : display text<br>" +
+          "-l[=column] : display linked text<br>" +
           "-c : count issues<br>" +
-          "[columns] : {"
+          "<br>[columns]<br> {"
         attributes = IssueQuery.available_columns
         while attributes
           attributes[0...5].each do |a|
@@ -82,7 +80,43 @@ module WikiListsRefIssue
           end
 
           res = @query.add_filter(filter , operator, values)
-          parser.raise_filter_error(@query) if res.nil?
+
+          if res.nil?
+            filterStr = filterSet[:filter] + filterSet[:operator] + filterSet[:values].join('|')
+            msg =  "failed add_filter: #{filterStr}<br>" +
+                '<br>[FILTER]<br>'
+            cr_count = 0
+            @query.available_filters.each do |k,f|
+              if cr_count >= 5
+                msg += '<br>'
+                cr_count = 0
+              end
+              msg += k.to_s + ', '
+              cr_count += 1
+            end
+            models.each do |k, m|
+              if cr_count >= 5
+                msg += '<br>'
+                cr_count = 0
+              end
+              msg += k.to_s + ', '
+              cr_count += 1
+            end
+            msg += '<br>'
+
+            msg += '<br>[OPERATOR]<br>'
+            cr_count = 0
+            Query.operators_labels.each do |k, l|
+              if cr_count >= 5
+                msg += '<br>'
+                cr_count = 0
+              end
+              msg += k + ':' + l + ', '
+              cr_count += 1
+            end
+            msg += '<br>'
+            raise msg.html_safe
+          end
         end
 
         @query.column_names = parser.columns unless parser.columns.empty?

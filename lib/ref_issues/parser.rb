@@ -231,41 +231,6 @@ module WikiLists
         word_array
       end
 
-      def raise_filter_error(query)
-        msg =  "<br/>failed add_filter: #{filterString}<br/>" +
-            '[FILTER] : {'
-        cr_count = 0
-        query.available_filters.each do |k,f|
-          if cr_count >= 5
-            msg += '<br/>'
-            cr_count = 0
-          end
-          msg += k.to_s + ', '
-          cr_count += 1
-        end
-        models.each do |k, m|
-          if cr_count >= 5
-            msg += '<br/>'
-            cr_count = 0
-          end
-          msg += k.to_s + ', '
-          cr_count += 1
-        end
-        msg += '}<br/>'
-
-        msg += '[OPERATOR] : {'
-        cr_count = 0
-        Query.operators_labels.each do |k, l|
-          if cr_count >= 5
-            msg += '<br/>'
-            cr_count = 0
-          end
-          msg += k + ':' + l + ', '
-          cr_count += 1
-        end
-
-        raise msg.html_safe
-      end
     end
   end
 end
