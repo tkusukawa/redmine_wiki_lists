@@ -1,3 +1,18 @@
-= wiki_lists
+= redmine_wiki_lists
 
-Description goes here
+This plugin adds wiki macros that display issue lists.
+
+== Installation
+
+* Download zip file from https://github.com/tkusukawa/redmine_wiki_lists/releases
+* Unzip
+* Move the unziped folder into the $REDMINE/plugins/
+* Restart REDMINE
+
+== Usage
+
+http://www.r-labs.org/projects/wiki_lists/wiki/Wiki_Lists_en
+
+== Links
+
+redmine.org: http://www.redmine.org/plugins/redmine_wiki_lists
