@@ -6,7 +6,7 @@ module WikiLists
     class Parser
 
       attr_reader :searchWordsS, :searchWordsD, :searchWordsW, :columns,
-        :customQueryName, :customQueryId, :additionalFilter, :onlyText, :onlyLink, :countFlag
+        :customQueryName, :customQueryId, :additionalFilter, :onlyText, :onlyLink, :countFlag, :zeroFlag
       def initialize(obj, args = nil, project = nil)
         parse_args obj, args, project if args
       end
@@ -22,6 +22,7 @@ module WikiLists
         @onlyLink = nil
         @onlyText = nil
         @countFlag = nil
+        @zeroFlag = nil
         args.each do |arg|
           arg.strip!;
           if arg=~/^\-([^\=:]*)([\=:])(.*)$/
@@ -102,6 +103,8 @@ module WikiLists
               end
             when 'c'
               @countFlag = true
+            when '0'
+              @zeroFlag = true
             else
               raise "unknown option:#{arg}"
           end

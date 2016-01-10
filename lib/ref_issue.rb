@@ -22,6 +22,7 @@ module WikiListsRefIssue
           "-t[=column] : display text<br>" +
           "-l[=column] : display linked text<br>" +
           "-c : count issues<br>" +
+          "-0 : no display if no issues" +
           "<br>[columns]<br> {"
         attributes = IssueQuery.available_columns
         while attributes
@@ -124,7 +125,9 @@ module WikiListsRefIssue
         @issues = @query.issues(:order => sort_clause,
                                 :include => [:assigned_to, :tracker, :priority, :category, :fixed_version]);
 
-        if parser.onlyText || parser.onlyLink
+        if parser.zeroFlag && @issues.size == 0
+          disp = ''
+        elsif parser.onlyText || parser.onlyLink
           disp = String.new
           atr = parser.onlyText if parser.onlyText
           atr = parser.onlyLink if parser.onlyLink
