@@ -25,12 +25,12 @@ module WikiLists
         @zeroFlag = nil
         args.each do |arg|
           arg.strip!;
-          if arg=~/^\-([^\=:]*)([\=:])(.*)$/
-            opt = $1
-            sep = $2
-            words = $3
+          if arg=~/^\-([^\=:]*)\s*([\=:])\s*(.*)$/
+            opt = $1.strip
+            sep = $2.strip
+            words = $3.strip
           elsif arg=~/^\-([^\=:]*)$/
-            opt = $1
+            opt = $1.strip
             sep = nil
             words = defaultWords(obj).join('|')
           else
@@ -68,10 +68,10 @@ module WikiLists
                 filter = ''
                 operator = ''
                 values = nil
-                if words =~ /^([^ ]*) +([^ ]*)$/
+                if words =~ /^([^\s]*)\s+([^\s]*)$/
                   filter = $1
                   operator = $2
-                elsif words =~ /^([^ ]*) +([^ ]*) +(.*)$/
+                elsif words =~ /^([^\s]*)\s+([^\s]*)\s+(.*)$/
                   filter = $1
                   operator = $2
                   values = words_to_word_array(obj, $3)
