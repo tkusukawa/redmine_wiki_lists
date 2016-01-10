@@ -14,7 +14,7 @@ module WikiListsRefIssue
         msg = "<br>parameter error: #{err_msg}<br>"+
           "#{err_msg.backtrace[0]}<br><br>" +
           "usage: {{ref_issues([option].., [column]..)}}<br>" +
-          "<br>[optins]<br>"+
+          "<br>[options]<br>"+
           "-i=CustomQueryID : specify custom query by id<br>"+
           "-q=CustomQueryName : specify custom query by name<br>"+
           "-p[=identifier] : restrict project<br>"+
