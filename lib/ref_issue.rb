@@ -161,8 +161,12 @@ module WikiListsRefIssue
         elsif parser.countFlag
           disp = @issues.size.to_s
         else
-          disp = context_menu(issues_context_menu_path)
-          disp << render(:partial => 'issues/list', :locals => {:issues => @issues, :query => @query});
+          if params[:format] == 'pdf'
+            disp = render(:partial => 'issues/list.html', :locals => {:issues => @issues, :query => @query})
+          else
+            disp = context_menu(issues_context_menu_path)
+            disp << render(:partial => 'issues/list', :locals => {:issues => @issues, :query => @query})
+          end
         end
 
         return disp.html_safe
