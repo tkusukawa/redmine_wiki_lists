@@ -1,11 +1,12 @@
+plugin_name = :redmine_wiki_lists
+
 Rails.configuration.to_prepare do
-  require_dependency 'redmine_wiki_lists/issue_name_link'
-  require_dependency 'redmine_wiki_lists/ref_issues/parser'
-  require_dependency 'redmine_wiki_lists/ref_issues'
-  require_dependency 'redmine_wiki_lists/wiki_list'
+  %w{issue_name_link ref_issues/parser ref_issues wiki_list}.each do |file_name|
+    require_dependency "#{plugin_name}/#{file_name}"
+  end
 end
 
-Redmine::Plugin.register :redmine_wiki_lists do
+Redmine::Plugin.register plugin_name do
   name 'Redmine Wiki Lists plugin'
   author 'Tomohisa Kusukawa'
   description 'wiki macros to display lists of issues.'
