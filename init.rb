@@ -1,8 +1,8 @@
 Rails.configuration.to_prepare do
-  Dir::foreach(File.join(File.dirname(__FILE__), 'lib', 'redmine_wiki_lists')) do |file|
-    next unless /\.rb$/ =~ file
-    require_dependency file
-  end
+  require_dependency 'redmine_wiki_lists/issue_name_link'
+  require_dependency 'redmine_wiki_lists/ref_issues/parser'
+  require_dependency 'redmine_wiki_lists/ref_issues'
+  require_dependency 'redmine_wiki_lists/wiki_list'
 end
 
 Redmine::Plugin.register :redmine_wiki_lists do
