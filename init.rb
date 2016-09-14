@@ -1,11 +1,12 @@
-require 'redmine'
+plugin_name = :redmine_wiki_lists
 
-Dir::foreach(File.join(File.dirname(__FILE__), 'lib')) do |file|
-  next unless /\.rb$/ =~ file
-  require file
+Rails.configuration.to_prepare do
+  %w{issue_name_link ref_issues/parser ref_issues wiki_list}.each do |file_name|
+    require_dependency "#{plugin_name}/#{file_name}"
+  end
 end
 
-Redmine::Plugin.register :redmine_wiki_lists do
+Redmine::Plugin.register plugin_name do
   name 'Redmine Wiki Lists plugin'
   author 'Tomohisa Kusukawa'
   description 'wiki macros to display lists of issues.'
