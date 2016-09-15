@@ -23,6 +23,7 @@ module RedmineWikiLists
         @only_text = nil
         @count_flag = nil
         @zero_flag = nil
+
         args.each do |arg|
           arg.strip!
 
@@ -75,11 +76,11 @@ module RedmineWikiLists
                   values = words_to_word_array(obj, $3)
                 elsif words =~ /\A(.*)=(.*)\z/
                   filter = $1
-                  operator = "="
+                  operator = '='
                   values = words_to_word_array(obj, $2)
                 else
                   filter = words
-                  operator = "="
+                  operator = '='
                   values = default_words(obj)
                 end
 
@@ -104,10 +105,10 @@ module RedmineWikiLists
       def has_search_conditions?
         return true if @custom_query_id
         return true if @custom_query_name
-        return true if @search_words_s and !@search_words_s.empty?
-        return true if @search_words_d and !@search_words_d.empty?
-        return true if @search_words_w and !@search_words_w.empty?
-        return true if @additional_filter and !@additional_filter.empty?
+        return true if @search_words_s.present?
+        return true if @search_words_d.present?
+        return true if @search_words_w.present?
+        return true if @additional_filter.present?
         false
       end
 
@@ -115,26 +116,26 @@ module RedmineWikiLists
         # オプションにカスタムクエリがあればカスタムクエリを名前から取得
         if @custom_query_id
           @query = IssueQuery.visible.find_by_id(@custom_query_id)
-          raise "can not find CustomQuery ID:'#{@custom_query_id}'" if !@query
+          raise "can not find CustomQuery ID:'#{@custom_query_id}'" unless @query
         elsif @custom_query_name then
-          cond = "project_id IS NULL"
+          cond = 'project_id IS NULL'
           cond << " OR project_id = #{project.id}" if project
           cond = "(#{cond}) AND name = '#{@custom_query_name}'"
           @query = IssueQuery.where(cond).where(user_id: User.current.id).first
-          @query = IssueQuery.where(cond).where(visibility: Query::VISIBILITY_PUBLIC).first if !@query
-          raise "can not find CustomQuery Name:'#{@custom_query_name}'" if !@query
+          @query = IssueQuery.where(cond).where(visibility: Query::VISIBILITY_PUBLIC).first uness @query
+          raise "can not find CustomQuery Name:'#{@custom_query_name}'" unless @query
         else
-          @query = IssueQuery.new(:name => "_", :filters => {})
+          @query = IssueQuery.new(name: '_', filters: {})
         end
 
         # Queryモデルを拡張
         overwrite_sql_for_field(@query)
-        @query.available_filters["description"] = { :type => :text, :order => 8 }
-        @query.available_filters["subjectdescription"] = { :type => :text, :order => 8 }
-        @query.available_filters["fixed_version_id"] = { :type => :int}
-        @query.available_filters["category_id"] = { :type => :int}
-        @query.available_filters["parent_id"] = { :type => :int}
-        @query.available_filters["id"] = { :type => :int}
+        @query.available_filters['description'] = {type: :text, order: 8}
+        @query.available_filters['subjectdescription'] = {type: :text, order: 8}
+        @query.available_filters['fixed_version_id'] = {type: :int}
+        @query.available_filters['category_id'] = {type: :int}
+        @query.available_filters['parent_id'] = {type: :int}
+        @query.available_filters['id'] = {type: :int}
 
         if @restrict_project
           @query.project = @restrict_project
@@ -155,7 +156,7 @@ module RedmineWikiLists
           end
         elsif obj.class == Issue  # チケットの場合はチケットsubjectを検索ワードにする
           words << obj.subject
-        elsif obj.class == Journal && obj.journalized_type == "Issue"
+        elsif obj.class == Journal && obj.journalized_type == 'Issue'
           # チケットコメントの場合もチケット番号表記を検索ワードにする
           words << '#'+obj.journalized_id.to_s
         end
@@ -183,26 +184,26 @@ module RedmineWikiLists
       def overwrite_sql_for_field(query)
         def query.sql_for_field(field, operator, value, db_table, db_field, is_custom_filter=false)
           case operator
-            when "~" # monkey patched for ref_issues: originally treat single value  -> extend multiple value
+            when '~' # monkey patched for ref_issues: originally treat single value  -> extend multiple value
               if db_field=='subjectdescription'
-                sql = "("
+                sql = '('
 
                 value.each do |v|
-                  sql << " OR " if sql != "("
+                  sql << ' OR ' if sql != '('
                   sql << "LOWER(#{db_table}.subject) LIKE '%#{self.class.connection.quote_string(v.to_s.downcase)}%'"
                   sql << " OR LOWER(#{db_table}.description) LIKE '%#{self.class.connection.quote_string(v.to_s.downcase)}%'"
                 end
 
-                sql << ")"
+                sql << ')'
               else
-                sql = "("
+                sql = '('
 
                 value.each do |v|
-                  sql << " OR " if sql != "("
+                  sql << ' OR ' if sql != '('
                   sql << "LOWER(#{db_table}.#{db_field}) LIKE '%#{self.class.connection.quote_string(v.to_s.downcase)}%'"
                 end
 
-                sql << ")"
+                sql << ')'
               end
             else
               super(field, operator, value, db_table, db_field, is_custom_filter)
@@ -222,7 +223,7 @@ module RedmineWikiLists
               word = obj.attributes[atr]
             else
               obj.custom_field_values.each do |cf|
-                if 'cf_'+cf.custom_field.id.to_s == atr || cf.custom_field.name == atr
+                if 'cf_' + cf.custom_field.id.to_s == atr || cf.custom_field.name == atr
                   word = cf.value
                 end
               end
