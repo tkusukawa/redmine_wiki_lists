@@ -1,14 +1,13 @@
-require_dependency 'redmine_wiki_lists/ref_issues/parser'
-
 module RedmineWikiLists::RefIssues
   Redmine::WikiFormatting::Macros.register do
-    desc "Displays a list of referer issues."
+    desc 'Displays a list of referer issues.'
     macro :ref_issues do |obj, args|
       parser = nil
 
       begin
-        parser = RedmineWikiLists::RefIssues::Parser.new obj, args, @project
+        parser = RedmineWikiLists::RefIssues::Parser.new(obj, args, @project)
       rescue => err_msg
+        attributes = IssueQuery.available_columns
         msg = <<-TEXT
 <br>parameter error: #{err_msg}<br>
 #{err_msg.backtrace[0]}<br><br>
@@ -23,13 +22,13 @@ usage: {{ref_issues([option].., [column]..)}}<br>
 -c : count issues<br>
 -0 : no display if no issues
 <br>[columns]<br> {
-        TEXT
-        attributes = IssueQuery.available_columns
+TEXT
 
         while attributes
           attributes[0...5].each do |a|
             msg += a.name.to_s + ', '
           end
+
           attributes = attributes[5..-1]
           msg += '<br>' if attributes
         end
@@ -56,28 +55,46 @@ usage: {{ref_issues([option].., [column]..)}}<br>
         @issue_count_by_group = @query.issue_count_by_group
 
         parser.search_words_s.each do |words|
-          @query.add_filter("subject","~", words)
+          @query.add_filter('subject', '~', words)
         end
 
         parser.search_words_d.each do |words|
-          @query.add_filter("description","~", words)
+          @query.add_filter('description', '~', words)
         end
 
         parser.search_words_w.each do |words|
-          @query.add_filter("subjectdescription","~", words)
+          @query.add_filter('subjectdescription', '~', words)
         end
 
-        models = {"tracker"=>Tracker,"category"=>IssueCategory,"status"=>IssueStatus,"assigned_to"=>User,"version"=>Version, "project"=>Project}
-        ids = {"tracker"=>"tracker_id","category"=>"category_id","status"=>"status_id","assigned_to"=>"assigned_to_id","version"=>"fixed_version_id","project"=>"project_id"}
-        attributes = {"tracker"=>"name","category"=>"name","status"=>"name","assigned_to"=>"login","version"=>"name","project"=>"name"}
+        models =
+            {'tracker' => Tracker,
+             'category' => IssueCategory,
+             'status' => IssueStatus,
+             'assigned_to' => User,
+             'version' => Version,
+             'project' => Project}
+        ids =
+            {'tracker' => 'tracker_id',
+             'category' => 'category_id',
+             'status' => 'status_id',
+             'assigned_to' => 'assigned_to_id',
+             'version' => 'fixed_version_id',
+             'project' => 'project_id'}
+        attributes =
+            {'tracker' => 'name',
+             'category' => 'name',
+             'status' => 'name',
+             'assigned_to' => 'login',
+             'version' => 'name',
+             'project' => 'name'}
 
-        parser.additional_filter.each do |filterSet|
-          filter = filterSet[:filter]
-          operator = filterSet[:operator]
-          values = filterSet[:values]
+        parser.additional_filter.each do |filter_set|
+          filter = filter_set[:filter]
+          operator = filter_set[:operator]
+          values = filter_set[:values]
 
           if models.has_key?(filter)
-            tgt_obj = models[filter].find_by attributes[filter]=>values.first
+            tgt_obj = models[filter].find_by(attributes[filter] => values.first)
             raise "can not resolve '#{values.first}' in #{models[filter].to_s}.#{attributes[filter]} " if tgt_obj.nil?
             filter = ids[filter]
             values = [tgt_obj.id.to_s]
@@ -86,31 +103,31 @@ usage: {{ref_issues([option].., [column]..)}}<br>
           res = @query.add_filter(filter , operator, values)
 
           if res.nil?
-            filter_str = filterSet[:filter] + filterSet[:operator] + filterSet[:values].join('|')
-            msg =  "failed add_filter: #{filter_str}<br>" +
-                '<br>[FILTER]<br>'
+            filter_str = filter_set[:filter] + filter_set[:operator] + filter_set[:values].join('|')
             cr_count = 0
+            msg = "failed add_filter: #{filter_str}<br><br>[FILTER]<br>"
 
             @query.available_filters.each do |k,f|
               if cr_count >= 5
                 msg += '<br>'
                 cr_count = 0
               end
+
               msg += k.to_s + ', '
               cr_count += 1
             end
 
-            models.each do |k, m|
+            models.each do |k, _m|
               if cr_count >= 5
                 msg += '<br>'
                 cr_count = 0
               end
+
               msg += k.to_s + ', '
               cr_count += 1
             end
 
-            msg += '<br>'
-            msg += '<br>[OPERATOR]<br>'
+            msg += '<br><br>[OPERATOR]<br>'
             cr_count = 0
 
             Query.operators_labels.each do |k, l|
@@ -129,9 +146,8 @@ usage: {{ref_issues([option].., [column]..)}}<br>
         end
 
         @query.column_names = parser.columns unless parser.columns.empty?
-
-        @issues = @query.issues(:order => sort_clause,
-                                :include => [:assigned_to, :tracker, :priority, :category, :fixed_version])
+        @issues = @query.issues(order: sort_clause,
+                                include: %i[assigned_to tracker priority category fixed_version])
 
         if parser.zero_flag && @issues.size == 0
           disp = ''
@@ -166,26 +182,25 @@ usage: {{ref_issues([option].., [column]..)}}<br>
             disp << ' ' if disp.size!=0
 
             if parser.only_link
-              disp << link_to("#{word}", {:controller => "issues", :action => "show", :id => issue.id})
+              disp << link_to("#{word}", issue_path(issue))
             else
-              disp << textilizable(word, :object=>issue)
+              disp << textilizable(word, object: issue)
             end
           end
         elsif parser.count_flag
           disp = @issues.size.to_s
         else
           if params[:format] == 'pdf'
-            disp = render(:partial => 'issues/list.html', :locals => {:issues => @issues, :query => @query})
+            disp = render(partial: 'issues/list.html', locals: {issues: @issues, query: @query})
           else
             disp = context_menu(issues_context_menu_path)
-            disp << render(:partial => 'issues/list', :locals => {:issues => @issues, :query => @query})
+            disp << render(partial: 'issues/list', locals: {issues: @issues, query: @query})
           end
         end
 
         disp.html_safe
       rescue => err_msg
-        msg = "#{err_msg}<br>"+
-            "#{err_msg.backtrace[0]}"
+        msg = "#{err_msg}<br>#{err_msg.backtrace[0]}"
         raise msg.html_safe
       end
     end
