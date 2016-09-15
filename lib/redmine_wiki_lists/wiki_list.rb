@@ -1,6 +1,6 @@
 module RedmineWikiLists::WikiList
   Redmine::WikiFormatting::Macros.register do
-    desc "Displays a list of wiki pages with text elements."
+    desc 'Displays a list of wiki pages with text elements.'
     macro :wiki_list do |obj, args|
       # 引数をパース
       cond=''
@@ -10,7 +10,7 @@ module RedmineWikiLists::WikiList
       column_names = []
 
       begin
-        raise "no parameters" if args.count==0
+        raise 'no parameters' if args.count==0
         args.each do |arg|
           arg.strip!
 
@@ -29,7 +29,7 @@ module RedmineWikiLists::WikiList
                   cond << ' AND ' if cond != ''
                   cond << "project_id = #{obj.project.id}"
                 end
-                joins << "INNER JOIN wikis ON wiki_pages.wiki_id=wikis.id"
+                joins << 'INNER JOIN wikis ON wiki_pages.wiki_id=wikis.id'
               when 'w' # 表の横幅
                 if arg=~/\A[^\=]+\=(.*)\z/ then # 幅を取得
                   width=$1.strip
@@ -52,17 +52,19 @@ module RedmineWikiLists::WikiList
           end
         end
       rescue => err_msg
-        msg = "parameter error: #{err_msg}<br>"+
-            "usage: {{wiki_list([option]*,[column]*)}}<br>"+
-            "[option]<br>"+
-            "-c : search child pages<br>"+
-            "-p=[PROJECT NAME] : restrict search pages by project<br>"+
-            "-w=[WIDTH] : table width<br>"+
-            "[column]<br>"+
-            "+title[| COLUMN_NAME] -> show page title<br>"+
-            "+alias[| COLUMN_NAME] -> show page aliases<br>"+
-            "KEYWORD[| COLUMN_NAME] -> scan KEYWORD and show following words to EOL<br>"+
-            "KEYWORD\\TERMINATOR[| COLUMN_NAME] -> scan KEYWORD and show following words to TERMINATOR"
+        msg = <<-TEXT
+parameter error: #{err_msg}<br>
+usage: {{wiki_list([option]*,[column]*)}}<br>
+[option]<br>
+-c : search child pages<br>
+-p=[PROJECT NAME] : restrict search pages by project<br>
+-w=[WIDTH] : table width<br>
+[column]<br>
++title[| COLUMN_NAME] -> show page title<br>
++alias[| COLUMN_NAME] -> show page aliases<br>
+KEYWORD[| COLUMN_NAME] -> scan KEYWORD and show following words to EOL<br>
+KEYWORD\\TERMINATOR[| COLUMN_NAME] -> scan KEYWORD and show following words to TERMINATOR
+TEXT
         raise msg.html_safe
       end
 
@@ -82,7 +84,7 @@ module RedmineWikiLists::WikiList
         end
       end
 
-      disp << "</tr>"
+      disp << '</tr>'
       # Wikiページの抽出
       wiki_pages = WikiPage.joins(joins).where(cond)
 
@@ -162,7 +164,7 @@ module RedmineWikiLists::WikiList
         end
       end # Wikiページ毎の処理
 
-      disp << "</table>"
+      disp << '</table>'
       disp.html_safe
     end
   end
