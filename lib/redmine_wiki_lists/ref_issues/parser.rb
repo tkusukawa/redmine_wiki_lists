@@ -8,7 +8,7 @@ module RedmineWikiLists
                   :custom_query_name, :custom_query_id, :additional_filter, :only_text, :only_link, :count_flag, :zero_flag
 
       def initialize(obj, args = nil, project = nil)
-        parse_args obj, args, project if args
+        parse_args(obj, args, project) if args
       end
 
       def parse_args(obj, args, project)
