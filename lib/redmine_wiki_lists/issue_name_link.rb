@@ -1,8 +1,9 @@
 module RedmineWikiLists::IssueNameLink
   Redmine::WikiFormatting::Macros.register do
-    desc 'make a link of a issue by its subject.'
+    desc 'Make a link of a issue by its subject.'
     macro :issue_name_link do |obj, args|
       out = ''
+
       begin
         raise 'no parameters' if args.count.zero?
         raise 'too many parameters' if args.count > 1
@@ -31,9 +32,9 @@ module RedmineWikiLists::IssueNameLink
         Issue.find_by_subject(name)
         out << link_to("#{disp}", issue_path(issue))
       rescue => err_msg
-        raise <<-TEXT
-parameter error: #{err_msg}<br>
-usage: {{issue_name_link([project_name:]issue_subject[|description])}}
+        raise <<-TEXT.html_safe
+Parameter error: #{err_msg}<br>
+Usage: {{issue_name_link([project_name:]issue_subject[|description])}}
 TEXT
       end
 
