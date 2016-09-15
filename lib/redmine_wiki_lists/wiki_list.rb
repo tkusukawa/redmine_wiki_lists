@@ -1,6 +1,6 @@
 module RedmineWikiLists::WikiList
   Redmine::WikiFormatting::Macros.register do
-    desc 'Displays a list of wiki pages with text elements.'
+    desc 'Displays a list of wiki pages with text elements (only inside wiki-pages).'
     macro :wiki_list do |obj, args|
       # 引数をパース
       cond = ''
@@ -11,6 +11,7 @@ module RedmineWikiLists::WikiList
 
       begin
         raise 'no parameters' if args.count.zero?
+
         args.each do |arg|
           arg.strip!
 
@@ -29,6 +30,7 @@ module RedmineWikiLists::WikiList
                   cond << ' AND ' if cond != ''
                   cond << "project_id = #{obj.project.id}"
                 end
+
                 joins << 'INNER JOIN wikis ON wiki_pages.wiki_id = wikis.id'
               when 'w' # 表の横幅
                 if arg =~ /\A[^\=]+\=(.*)\z/ # 幅を取得
@@ -89,7 +91,7 @@ TEXT
       wiki_pages = WikiPage.joins(joins).where(cond)
 
       wiki_pages.each do |wiki_page| #---------------- Wikiページ毎の処理
-        next if !wiki_page.visible?
+        next unless wiki_page.visible?
         # 1ページに抽出キーワードが複数あった場合に複数行表示するため一旦表示行を配列に記憶する
         lines_by_page = [[]] # 最初は1ページ1行からスタート
         column_num = 0
@@ -97,20 +99,23 @@ TEXT
         column_keys.each do |column_key| #---------------- カラム毎の処理
           case column_key
             when '+title' # Wikiページ名
-              html=link_to(wiki_page.title,
-                           :controller => 'wiki', :action => 'show',
-                           :project_id => wiki_page.project, :id => wiki_page.title)
-              self.set_lines(lines_by_page, column_num, html)
+              html =
+                  link_to(wiki_page.title,
+                          controller: 'wiki', action: 'show',
+                          project_id: wiki_page.project, id: wiki_page.title)
+              RedmineWikiLists::WikiList.set_lines(lines_by_page, column_num, html)
             when '+alias' # Wikiページの別名
               redirects = WikiRedirect.where(wiki_id: wiki_page.wiki_id, redirects_to: wiki_page.title)
-              html=''
+              html = ''
+
               redirects.each do |redirect|
-                html << '<br>' if html!=''
+                html << '<br>' if html.present?
                 html << redirect.title
               end
-              self.set_lines(lines_by_page, column_num, html)
+
+              RedmineWikiLists::WikiList.set_lines(lines_by_page, column_num, html)
             when '+project' # Wikiページのプロジェクト名
-              self.set_lines(lines_by_page, column_num, wiki_page.project.to_s)
+              RedmineWikiLists::WikiList.set_lines(lines_by_page, column_num, wiki_page.project.to_s)
             else # それ以外はWikiページの中からキーワードで表示要素を抽出する
               new_lines = [] # カラムキーワードが抽出される毎にこの変数に表示行を追加する
 
@@ -136,7 +141,7 @@ TEXT
                 if $1
                   html = textilizable($1.strip) # 前後の空白を覗いてWiki表記解釈
                   # Wikiページ内のこれまでのカラム処理で生成されたlinesに表示内容を記入
-                  self.set_lines(lines_by_page, column_num, html)
+                  RedmineWikiLists::WikiList.set_lines(lines_by_page, column_num, html)
 
                   lines_by_page.each do |line|
                     new_lines.push(line.dup) # 本カラムによって生成される行にコピーを追加
@@ -145,7 +150,7 @@ TEXT
               end
 
               if new_lines.length.zero? # キーワードが１つも抽出されていなかったら空文字を入れておく
-                self.set_lines(lines_by_page, column_num, '')
+                RedmineWikiLists::WikiList.set_lines(lines_by_page, column_num, '')
               else # 抽出があった場合は本カラムで作られた新しい表示行をページ表示行にする
                 lines_by_page=new_lines
               end
@@ -172,9 +177,11 @@ TEXT
   end
 
   # 配列の全ての要素配列のcolumn_num番目にstrを書きこむ
-  def self.set_lines(lines, column_num, str)
+  def set_lines(lines, column_num, str)
     lines.each do |line|
       line[column_num] = str
     end
   end
+
+  module_function :set_lines
 end
