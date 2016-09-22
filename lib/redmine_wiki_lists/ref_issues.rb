@@ -77,10 +77,16 @@ usage: {{ref_issues([option].., [column]..)}}<br>
           values = filterSet[:values]
 
           if models.has_key?(filter)
-            tgt_obj = models[filter].find_by attributes[filter]=>values.first
-            raise "can not resolve '#{values.first}' in #{models[filter].to_s}.#{attributes[filter]} " if tgt_obj.nil?
+            unless values.nil?
+              tgt_objs = []
+              values.each do |value|
+                tgt_obj = models[filter].find_by(attributes[filter]=>value)
+                raise "can not resolve '#{value}' in #{models[filter].to_s}.#{attributes[filter]} " if tgt_obj.nil?
+                tgt_objs << tgt_obj.id.to_s
+              end
+              values = tgt_objs
+            end
             filter = ids[filter]
-            values = [tgt_obj.id.to_s]
           end
 
           res = @query.add_filter(filter , operator, values)
