@@ -244,6 +244,11 @@ module RedmineWikiLists
         if word =~ /\[current_user\]/
           return User.current.id.to_s
         end
+
+        if word =~ /\[(.*)days_ago\]/
+          return (Date.today - $1.to_i).strftime("%Y-%m-%d")
+        end
+
         if word =~ /\A\[(.*)\]\z/
           raise "can not use reference '#{word}' except for issues." if obj.class != Issue
           atr = $1
