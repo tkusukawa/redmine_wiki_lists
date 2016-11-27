@@ -71,10 +71,10 @@ module RedmineWikiLists
 
                 if words =~ /\A([^\s]*)\s+([^\s]*)\z/
                   filter = $1
-                  operator = $2
+                  operator = refer_field(obj, $2)
                 elsif words =~ /\A([^\s]*)\s+([^\s]*)\s+(.*)\z/
                   filter = $1
-                  operator = $2
+                  operator = refer_field(obj, $2)
                   values = words_to_word_array(obj, $3)
                 elsif words =~ /\A(.*)=(.*)\z/
                   filter = $1
@@ -138,7 +138,7 @@ module RedmineWikiLists
         @query.available_filters['category_id'] = {type: :int}
         @query.available_filters['parent_id'] = {type: :int}
         @query.available_filters['id'] = {type: :int}
-
+        @query.available_filters['treated'] = {type: :date}
         if @restrict_project
           @query.project = @restrict_project
         end
@@ -185,55 +185,80 @@ module RedmineWikiLists
       # @todo Стремный патч, который сделан из-за отсутствия поминимания как работать с Query. По сути, надо патчить IssueQuery
       def overwrite_sql_for_field(query)
         def query.sql_for_field(field, operator, value, db_table, db_field, is_custom_filter=false)
-          case operator
-            when '~' # monkey patched for ref_issues: originally treat single value  -> extend multiple value
-              if db_field=='subjectdescription'
-                sql = '('
+          if operator == '~'
+            # monkey patched for ref_issues: originally treat single value  -> extend multiple value
+            if db_field=='subjectdescription'
+              sql = '('
 
-                value.each do |v|
-                  sql << ' OR ' if sql != '('
-                  sql << "LOWER(#{db_table}.subject) LIKE '%#{self.class.connection.quote_string(v.to_s.downcase)}%'"
-                  sql << " OR LOWER(#{db_table}.description) LIKE '%#{self.class.connection.quote_string(v.to_s.downcase)}%'"
-                end
-
-                sql << ')'
-              else
-                sql = '('
-
-                value.each do |v|
-                  sql << ' OR ' if sql != '('
-                  sql << "LOWER(#{db_table}.#{db_field}) LIKE '%#{self.class.connection.quote_string(v.to_s.downcase)}%'"
-                end
-
-                sql << ')'
+              value.each do |v|
+                sql << ' OR ' if sql != '('
+                sql << "LOWER(#{db_table}.subject) LIKE '%#{self.class.connection.quote_string(v.to_s.downcase)}%'"
+                sql << " OR LOWER(#{db_table}.description) LIKE '%#{self.class.connection.quote_string(v.to_s.downcase)}%'"
               end
+
+              sql << ')'
+              return sql
             else
-              super(field, operator, value, db_table, db_field, is_custom_filter)
+              sql = '('
+
+              value.each do |v|
+                sql << ' OR ' if sql != '('
+                sql << "LOWER(#{db_table}.#{db_field}) LIKE '%#{self.class.connection.quote_string(v.to_s.downcase)}%'"
+              end
+
+              sql << ')'
+              return sql
+            end
+          elsif db_field == 'treated'
+            raise "too many values for treated" if value.length > 2
+            raise "too few values for treated" if value.length < 2
+            start_date = value[0]
+            end_date = value[1]
+            user = operator
+
+            sql =  '('
+            sql << "  (issues.author_id = #{user}"
+            sql << "   AND (CAST(issues.created_on AS DATE) BETWEEN '#{start_date}' AND '#{end_date}'))"
+            sql << "  OR ("
+            sql << "    (select count(*) from journals where journalized_type = 'Issue' AND journalized_id = issues.id"
+            sql << "      AND journals.user_id = #{user}"
+            sql << "      AND (CAST(journals.created_on AS DATE) BETWEEN '#{start_date}' AND '#{end_date}')"
+            sql << "    ) > 0"
+            sql << "  )"
+            sql << ')'
+            return sql
           end
+
+          return super(field, operator, value, db_table, db_field, is_custom_filter)
         end
       end
 
       def words_to_word_array(obj, words)
         words.split('|').collect do |word|
           word.strip!
+          refer_field(obj, word)
+        end
+      end
 
-          if word =~ /\A\[(.*)\]\z/
-            raise "can not use reference '#{word}' except for issues." if obj.class != Issue
-            atr = $1
+      def refer_field(obj, word)
+        if word =~ /\[current_user\]/
+          return User.current.id.to_s
+        end
+        if word =~ /\A\[(.*)\]\z/
+          raise "can not use reference '#{word}' except for issues." if obj.class != Issue
+          atr = $1
 
-            if obj.attributes.has_key?(atr)
-              word = obj.attributes[atr]
-            else
-              obj.custom_field_values.each do |cf|
-                if 'cf_' + cf.custom_field.id.to_s == atr || cf.custom_field.name == atr
-                  word = cf.value
-                end
+          if obj.attributes.has_key?(atr)
+            word = obj.attributes[atr]
+          else
+            obj.custom_field_values.each do |cf|
+              if 'cf_' + cf.custom_field.id.to_s == atr || cf.custom_field.name == atr
+                word = cf.value
               end
             end
           end
-
-          word.to_s
         end
+        return word.to_s
       end
     end
   end
