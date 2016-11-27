@@ -26,6 +26,8 @@ module RedmineWikiLists
 
         args.each do |arg|
           arg.strip!
+          arg.gsub!('&gt;', '>')
+          arg.gsub!('&lt;', '<')
 
           if arg=~/\A\-([^\=:]*)\s*([\=:])\s*(.*)\z/
             opt = $1.strip
