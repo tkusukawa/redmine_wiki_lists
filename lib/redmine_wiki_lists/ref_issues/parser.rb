@@ -130,6 +130,11 @@ module RedmineWikiLists
           @query = IssueQuery.new(name: '_', filters: {})
         end
 
+        @query.user = User.current
+        if @restrict_project
+          @query.project = @restrict_project
+        end
+
         # Queryモデルを拡張
         overwrite_sql_for_field(@query)
         @query.available_filters['description'] = {type: :text, order: 8}
@@ -139,9 +144,6 @@ module RedmineWikiLists
         @query.available_filters['parent_id'] = {type: :int}
         @query.available_filters['id'] = {type: :int}
         @query.available_filters['treated'] = {type: :date}
-        if @restrict_project
-          @query.project = @restrict_project
-        end
 
         @query
       end
