@@ -10,7 +10,7 @@ Redmine::Plugin.register plugin_name do
   name 'Redmine Wiki Lists plugin'
   author 'Tomohisa Kusukawa'
   description 'wiki macros to display lists of issues.'
-  version '0.0.6'
+  version '0.0.7'
   url 'http://www.r-labs.org/projects/wiki_lists/wiki/Wiki_Lists'
-  author_url 'http://bitbucket.org/tkusukawa'
+  author_url 'https://github.com/tkusukawa/'
 end
