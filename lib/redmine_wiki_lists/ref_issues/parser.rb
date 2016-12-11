@@ -13,6 +13,7 @@ module RedmineWikiLists
 
       def parse_args(obj, args, project)
         args ||= []
+        @project = project
         @search_words_s = []
         @search_words_d = []
         @search_words_w = []
@@ -216,7 +217,13 @@ module RedmineWikiLists
             raise "too few values for treated" if value.length < 2
             start_date = value[0]
             end_date = value[1]
-            user = operator
+            if operator =~ /^\d+$/
+              user = operator
+            else
+              user_obj = User.find_by_login(operator)
+              raise "can not find user <#{operator}>" if user_obj.nil?
+              user = user_obj.id.to_s
+            end
 
             sql =  '('
             sql << "  (issues.author_id = #{user}"
@@ -244,7 +251,15 @@ module RedmineWikiLists
 
       def refer_field(obj, word)
         if word =~ /\[current_user\]/
+          return User.current.login
+        end
+
+        if word =~ /\[current_user_id\]/
           return User.current.id.to_s
+        end
+
+        if word =~ /\[current_project_id\]/
+          return @project.id.to_s
         end
 
         if word =~ /\[(.*)days_ago\]/
