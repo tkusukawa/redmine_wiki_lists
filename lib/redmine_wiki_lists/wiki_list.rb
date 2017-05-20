@@ -10,7 +10,7 @@ module RedmineWikiLists::WikiList
       column_names = []
 
       begin
-        raise 'no parameters' if args.count.zero?
+        raise '- no parameters' if args.count.zero?
 
         args.each do |arg|
           arg.strip!
@@ -38,7 +38,7 @@ module RedmineWikiLists::WikiList
                   table_width = 'width="' + width + '"'
                 end
               else
-                raise "unknown option: #{arg}"
+                raise "- unknown option: #{arg}"
             end
           else # オプションでない場合はカラム指定
             if arg =~ /\A(.*)\|(.*)\|(.*)\z/ # 抽出キーワードと別にカラム表示名と列幅の指定がある場合
@@ -55,7 +55,7 @@ module RedmineWikiLists::WikiList
         end
       rescue => err_msg
         msg = <<-TEXT
-parameter error: #{err_msg}<br>
+- parameter error: #{err_msg}<br>
 usage: {{wiki_list([option]*,[column]*)}}<br>
 [option]<br>
 -c : search child pages<br>

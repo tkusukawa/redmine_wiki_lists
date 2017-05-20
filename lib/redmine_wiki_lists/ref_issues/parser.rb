@@ -54,13 +54,13 @@ module RedmineWikiLists
               if sep
                 @custom_query_name = words
               else
-                raise "no CustomQuery name:#{arg}"
+                raise "- no CustomQuery name:#{arg}"
               end
             when 'i'
               if sep
                 @custom_query_id = words
               else
-                raise "no CustomQuery ID:#{arg}"
+                raise "- no CustomQuery ID:#{arg}"
               end
             when 'p'
               @restrict_project = sep ? Project.find(words) : project
@@ -89,7 +89,7 @@ module RedmineWikiLists
 
                 @additional_filter << {:filter=>filter, :operator=>operator, :values=>values}
               else
-                raise "no additional filter:#{arg}"
+                raise "- no additional filter:#{arg}"
               end
             when 't'
               @only_text = sep ? words : 'subject'
@@ -100,7 +100,7 @@ module RedmineWikiLists
             when '0'
               @zero_flag = true
             else
-              raise "unknown option:#{arg}"
+              raise "- unknown option:#{arg}"
           end
         end
       end
@@ -119,14 +119,14 @@ module RedmineWikiLists
         # オプションにカスタムクエリがあればカスタムクエリを名前から取得
         if @custom_query_id
           @query = IssueQuery.visible.find_by_id(@custom_query_id)
-          raise "can not find CustomQuery ID:'#{@custom_query_id}'" unless @query
+          raise "- can not find CustomQuery ID:'#{@custom_query_id}'" unless @query
         elsif @custom_query_name then
           cond = 'project_id IS NULL'
           cond << " OR project_id = #{project.id}" if project
           cond = "(#{cond}) AND name = '#{@custom_query_name}'"
           @query = IssueQuery.where(cond).where(user_id: User.current.id).first
           @query = IssueQuery.where(cond).where(visibility: Query::VISIBILITY_PUBLIC).first unless @query
-          raise "can not find CustomQuery Name:'#{@custom_query_name}'" unless @query
+          raise "- can not find CustomQuery Name:'#{@custom_query_name}'" unless @query
         else
           @query = IssueQuery.new(name: '_', filters: {})
         end
@@ -182,7 +182,7 @@ module RedmineWikiLists
         return :updated_on if name_sym == :updated
         return :created_on if name_sym == :created
         return name_sym if name =~ /\Acf_/
-        raise "unknown column:#{name}"
+        raise "- unknown column:#{name}"
       end
 
       # @todo Стремный патч, который сделан из-за отсутствия поминимания как работать с Query. По сути, надо патчить IssueQuery
@@ -213,15 +213,15 @@ module RedmineWikiLists
               return sql
             end
           elsif db_field == 'treated'
-            raise "too many values for treated" if value.length > 2
-            raise "too few values for treated" if value.length < 2
+            raise "- too many values for treated" if value.length > 2
+            raise "- too few values for treated" if value.length < 2
             start_date = value[0]
             end_date = value[1]
             if operator =~ /^\d+$/
               user = operator
             else
               user_obj = User.find_by_login(operator)
-              raise "can not find user <#{operator}>" if user_obj.nil?
+              raise "- can not find user <#{operator}>" if user_obj.nil?
               user = user_obj.id.to_s
             end
 
@@ -267,7 +267,7 @@ module RedmineWikiLists
         end
 
         if word =~ /\A\[(.*)\]\z/
-          raise "can not use reference '#{word}' except for issues." if obj.class != Issue
+          raise "- can not use reference '#{word}' except for issues." if obj.class != Issue
           atr = $1
 
           if obj.attributes.has_key?(atr)

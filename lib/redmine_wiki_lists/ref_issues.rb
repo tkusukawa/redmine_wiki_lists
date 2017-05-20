@@ -9,7 +9,7 @@ module RedmineWikiLists::RefIssues
       rescue => err_msg
         attributes = IssueQuery.available_columns
         msg = <<-TEXT
-<br>parameter error: #{err_msg}<br>
+- <br>parameter error: #{err_msg}<br>
 #{err_msg.backtrace[0]}<br><br>
 usage: {{ref_issues([option].., [column]..)}}<br>
 <br>[options]<br>
@@ -52,7 +52,7 @@ TEXT
         sort_clear
         sort_init(@query.sort_criteria.empty? ? [['id', 'desc']] : @query.sort_criteria)
         sort_update(@query.sortable_columns)
-        @issue_count_by_group = @query.issue_count_by_group
+        #@issue_count_by_group = @query.issue_count_by_group
 
         parser.search_words_s.each do |words|
           @query.add_filter('subject', '~', words)
@@ -98,7 +98,7 @@ TEXT
               tgt_objs = []
               values.each do |value|
                 tgt_obj = models[filter].find_by(attributes[filter]=>value)
-                raise "can not resolve '#{value}' in #{models[filter].to_s}.#{attributes[filter]} " if tgt_obj.nil?
+                raise "- can not resolve '#{value}' in #{models[filter].to_s}.#{attributes[filter]} " if tgt_obj.nil?
                 tgt_objs << tgt_obj.id.to_s
               end
               values = tgt_objs
@@ -111,7 +111,7 @@ TEXT
           if res.nil?
             filter_str = filter_set[:filter] + filter_set[:operator] + filter_set[:values].join('|')
             cr_count = 0
-            msg = "failed add_filter: #{filter_str}<br><br>[FILTER]<br>"
+            msg = "- failed add_filter: #{filter_str}<br><br>[FILTER]<br>"
 
             @query.available_filters.each do |k,f|
               if cr_count >= 5
@@ -199,14 +199,23 @@ TEXT
           if params[:format] == 'pdf'
             disp = render(partial: 'issues/list.html', locals: {issues: @issues, query: @query})
           else
-            disp = context_menu(issues_context_menu_path)
+            if method(:context_menu).parameters.size > 0
+              disp = context_menu(issues_context_menu_path) # < redmine 3.3.x
+            else
+              disp = context_menu.to_s # >= redmine 3.4.0
+            end
             disp << render(partial: 'issues/list', locals: {issues: @issues, query: @query})
           end
         end
 
         disp.html_safe
       rescue => err_msg
-        msg = "#{err_msg}<br>#{err_msg.backtrace[0]}"
+        msg = "#{err_msg}"
+        if msg[0] != '-'
+          err_msg.backtrace.each do |backtrace|
+            msg << "<br>#{backtrace}"
+          end
+        end
         raise msg.html_safe
       end
     end
