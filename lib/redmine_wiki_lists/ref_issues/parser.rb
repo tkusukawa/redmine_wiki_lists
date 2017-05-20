@@ -212,6 +212,16 @@ module RedmineWikiLists
               sql << ')'
               return sql
             end
+          elsif operator == '=='
+            sql = '('
+
+            value.each do |v|
+              sql << ' OR ' if sql != '('
+              sql << "LOWER(#{db_table}.#{db_field}) = '#{self.class.connection.quote_string(v.to_s.downcase)}'"
+            end
+
+            sql << ')'
+            return sql
           elsif db_field == 'treated'
             raise "- too many values for treated" if value.length > 2
             raise "- too few values for treated" if value.length < 2
