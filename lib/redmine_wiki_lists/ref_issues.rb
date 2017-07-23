@@ -71,6 +71,7 @@ TEXT
              'category' => IssueCategory,
              'status' => IssueStatus,
              'assigned_to' => User,
+             'author' => User,
              'version' => Version,
              'project' => Project}
         ids =
@@ -78,6 +79,7 @@ TEXT
              'category' => 'category_id',
              'status' => 'status_id',
              'assigned_to' => 'assigned_to_id',
+             'author' => 'author_id',
              'version' => 'fixed_version_id',
              'project' => 'project_id'}
         attributes =
@@ -85,6 +87,7 @@ TEXT
              'category' => 'name',
              'status' => 'name',
              'assigned_to' => 'login',
+             'author' => 'login',
              'version' => 'name',
              'project' => 'name'}
 
