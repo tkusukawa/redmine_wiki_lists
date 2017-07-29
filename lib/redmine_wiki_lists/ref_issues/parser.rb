@@ -277,13 +277,19 @@ module RedmineWikiLists
         end
 
         if word =~ /\A\[(.*)\]\z/
-          raise "- can not use reference '#{word}' except for issues." if obj.class != Issue
           atr = $1
-
-          if obj.attributes.has_key?(atr)
-            word = obj.attributes[atr]
+          if obj.class == Issue
+            issue = obj
+          elsif obj.class == Journal && obj.journalized_type == 'Issue'
+            issue = obj.issue
           else
-            obj.custom_field_values.each do |cf|
+            raise "- can not use reference '#{word}' except for issues."
+          end
+
+          if issue.attributes.has_key?(atr)
+            word = issue.attributes[atr]
+          else
+            issue.custom_field_values.each do |cf|
               if 'cf_' + cf.custom_field.id.to_s == atr || cf.custom_field.name == atr
                 word = cf.value
               end
