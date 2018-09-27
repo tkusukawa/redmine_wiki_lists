@@ -7,6 +7,7 @@ Rails.configuration.to_prepare do
 end
 
 Redmine::Plugin.register plugin_name do
+  requires_redmine :version_or_higher => '3.4'
   name 'Redmine Wiki Lists plugin'
   author 'Tomohisa Kusukawa'
   description 'wiki macros to display lists of issues.'
