@@ -218,6 +218,13 @@ module RedmineWikiLists
             value.each do |v|
               sql << ' OR ' if sql != '('
               sql << "LOWER(#{db_table}.#{db_field}) = '#{self.class.connection.quote_string(v.to_s.downcase)}'"
+              if field =~ /^cf_([0-9]+)$/
+                custom_field_id = $1
+                custom_field_enumerations = CustomFieldEnumeration.where(custom_field_id: custom_field_id, name: v)
+                custom_field_enumerations.each do |custom_field_enumeration|
+                  sql << " OR LOWER(#{db_table}.#{db_field}) = '#{self.class.connection.quote_string(custom_field_enumeration.id.to_s.downcase)}'"
+                end
+              end
             end
 
             sql << ')'
