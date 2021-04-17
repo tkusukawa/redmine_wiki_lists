@@ -30,7 +30,7 @@ module RedmineWikiLists::IssueNameLink
         issue = Issue.where(project_id: prj.id, subject: name).first
         raise "- issue:#{name} is not found in prj:#{prj.to_s}" unless issue
         Issue.find_by_subject(name)
-        out << link_to("#{disp}", issue_path(issue))
+        out += link_to("#{disp}", issue_path(issue))
       rescue => err_msg
         raise <<-TEXT.html_safe
 Parameter error: #{err_msg}<br>

@@ -18,20 +18,20 @@ module RedmineWikiLists::WikiList
           if arg =~ /\A\-([^\=]*)(\=.*)?\z/ # オプション表記発見
             case $1
               when 'c' # リストアップの対象を子ページに限定する場合
-                cond << ' AND ' if cond != ''
-                cond << "parent_id = #{obj.page.id}"
+                cond += ' AND ' if cond != ''
+                cond += "parent_id = #{obj.page.id}"
               when 'p' # リストアップの対象を特定の別プロジェクトのWikiに限定する場合
                 if arg=~/\A[^\=]+\=(.*)\z/ then # プロジェクト名を指定
                   name = $1.strip
                   prj = Project.find_by_name(name)
-                  cond << ' AND ' if cond != ''
-                  cond << "project_id = #{prj.id}"
+                  cond += ' AND ' if cond != ''
+                  cond += "project_id = #{prj.id}"
                 else # プロジェクト名の指定が無い場合は当該WIKIのPJに限定
-                  cond << ' AND ' if cond != ''
-                  cond << "project_id = #{obj.project.id}"
+                  cond += ' AND ' if cond != ''
+                  cond += "project_id = #{obj.project.id}"
                 end
 
-                joins << 'INNER JOIN wikis ON wiki_pages.wiki_id = wikis.id'
+                joins += 'INNER JOIN wikis ON wiki_pages.wiki_id = wikis.id'
               when 'w' # 表の横幅
                 if arg =~ /\A[^\=]+\=(.*)\z/ # 幅を取得
                   width = $1.strip
@@ -80,13 +80,13 @@ TEXT
       # カラム名(最初の行)を作成
       column_names.each do |column_name|
         if column_name =~ /\A(.*)\|(.*)\z/ then
-          disp << '<th width="'+$2+'">' + $1 + '</th>'
+          disp += '<th width="'+$2+'">' + $1 + '</th>'
         else
-          disp << "<th>#{column_name}</th>"
+          disp += "<th>#{column_name}</th>"
         end
       end
 
-      disp << '</tr>'
+      disp += '</tr>'
       # Wikiページの抽出
       wiki_pages = WikiPage.joins(joins).where(cond)
 
@@ -109,8 +109,8 @@ TEXT
               html = ''
 
               redirects.each do |redirect|
-                html << '<br>' if html.present?
-                html << redirect.title
+                html += '<br>' if html.present?
+                html += redirect.title
               end
 
               RedmineWikiLists::WikiList.set_lines(lines_by_page, column_num, html)
@@ -161,17 +161,17 @@ TEXT
 
         # 配列に記憶されたページ内の表示内容をHTMLに吐き出す
         lines_by_page.each do |line|
-          disp << '<tr>'
+          disp += '<tr>'
 
           line.each do |column|
-            disp << "<td>#{column}</td>"
+            disp += "<td>#{column}</td>"
           end
 
-          disp << '</tr>'
+          disp += '</tr>'
         end
       end # Wikiページ毎の処理
 
-      disp << '</table>'
+      disp += '</table>'
       disp.html_safe
     end
   end

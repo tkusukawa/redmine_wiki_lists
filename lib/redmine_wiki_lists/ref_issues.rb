@@ -158,9 +158,9 @@ TEXT
         @issues = @query.issues(order: sort_clause)
 
         if parser.zero_flag && @issues.size == 0
-          disp = ''
+          disp = String.new
         elsif parser.only_text || parser.only_link
-          disp = ''
+          disp = String.new
           atr = parser.only_text if parser.only_text
           atr = parser.only_link if parser.only_link
           word = nil
@@ -187,12 +187,12 @@ TEXT
               break
             end
 
-            disp << ' ' if disp.size!=0
+            disp += ' ' if disp.size!=0
 
             if parser.only_link
-              disp << link_to("#{word}", issue_path(issue))
+              disp += link_to("#{word}", issue_path(issue))
             else
-              disp << textilizable(word, object: issue)
+              disp += textilizable(word, object: issue)
             end
           end
         elsif parser.count_flag
@@ -206,7 +206,7 @@ TEXT
             else
               disp = context_menu.to_s # >= redmine 3.4.0
             end
-            disp << render(partial: 'issues/list', locals: {issues: @issues, query: @query})
+            disp += render(partial: 'issues/list', locals: {issues: @issues, query: @query})
           end
         end
 
@@ -215,7 +215,7 @@ TEXT
         msg = "#{err_msg}"
         if msg[0] != '-'
           err_msg.backtrace.each do |backtrace|
-            msg << "<br>#{backtrace}"
+            msg += "<br>#{backtrace}"
           end
         end
         raise msg.html_safe

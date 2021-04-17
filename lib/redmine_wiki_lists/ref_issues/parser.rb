@@ -122,7 +122,7 @@ module RedmineWikiLists
           raise "- can not find CustomQuery ID:'#{@custom_query_id}'" unless @query
         elsif @custom_query_name then
           cond = 'project_id IS NULL'
-          cond << " OR project_id = #{project.id}" if project
+          cond += " OR project_id = #{project.id}" if project
           cond = "(#{cond}) AND name = '#{@custom_query_name}'"
           @query = IssueQuery.where(cond).where(user_id: User.current.id).first
           @query = IssueQuery.where(cond).where(visibility: Query::VISIBILITY_PUBLIC).first unless @query
@@ -157,13 +157,13 @@ module RedmineWikiLists
           redirects = WikiRedirect.where(redirects_to: obj.page.title) #別名query
 
           redirects.each do |redirect|
-            words << redirect.title #別名
+            words += redirect.title #別名
           end
         elsif obj.class == Issue  # チケットの場合はチケットsubjectを検索ワードにする
-          words << obj.subject
+          words += obj.subject
         elsif obj.class == Journal && obj.journalized_type == 'Issue'
           # チケットコメントの場合もチケット番号表記を検索ワードにする
-          words << '#'+obj.journalized_id.to_s
+          words += '#'+obj.journalized_id.to_s
         end
 
         words
@@ -194,40 +194,40 @@ module RedmineWikiLists
               sql = '('
 
               value.each do |v|
-                sql << ' OR ' if sql != '('
-                sql << "LOWER(#{db_table}.subject) LIKE '%#{self.class.connection.quote_string(v.to_s.downcase)}%'"
-                sql << " OR LOWER(#{db_table}.description) LIKE '%#{self.class.connection.quote_string(v.to_s.downcase)}%'"
+                sql += ' OR ' if sql != '('
+                sql += "LOWER(#{db_table}.subject) LIKE '%#{self.class.connection.quote_string(v.to_s.downcase)}%'"
+                sql += " OR LOWER(#{db_table}.description) LIKE '%#{self.class.connection.quote_string(v.to_s.downcase)}%'"
               end
 
-              sql << ')'
+              sql += ')'
               return sql
             else
               sql = '('
 
               value.each do |v|
-                sql << ' OR ' if sql != '('
-                sql << "LOWER(#{db_table}.#{db_field}) LIKE '%#{self.class.connection.quote_string(v.to_s.downcase)}%'"
+                sql += ' OR ' if sql != '('
+                sql += "LOWER(#{db_table}.#{db_field}) LIKE '%#{self.class.connection.quote_string(v.to_s.downcase)}%'"
               end
 
-              sql << ')'
+              sql += ')'
               return sql
             end
           elsif operator == '=='
             sql = '('
 
             value.each do |v|
-              sql << ' OR ' if sql != '('
-              sql << "LOWER(#{db_table}.#{db_field}) = '#{self.class.connection.quote_string(v.to_s.downcase)}'"
+              sql += ' OR ' if sql != '('
+              sql += "LOWER(#{db_table}.#{db_field}) = '#{self.class.connection.quote_string(v.to_s.downcase)}'"
               if field =~ /^cf_([0-9]+)$/
                 custom_field_id = $1
                 custom_field_enumerations = CustomFieldEnumeration.where(custom_field_id: custom_field_id, name: v)
                 custom_field_enumerations.each do |custom_field_enumeration|
-                  sql << " OR LOWER(#{db_table}.#{db_field}) = '#{self.class.connection.quote_string(custom_field_enumeration.id.to_s.downcase)}'"
+                  sql += " OR LOWER(#{db_table}.#{db_field}) = '#{self.class.connection.quote_string(custom_field_enumeration.id.to_s.downcase)}'"
                 end
               end
             end
 
-            sql << ')'
+            sql += ')'
             return sql
           elsif db_field == 'treated'
             raise "- too many values for treated" if value.length > 2
@@ -243,15 +243,15 @@ module RedmineWikiLists
             end
 
             sql =  '('
-            sql << "  (issues.author_id = #{user}"
-            sql << "   AND (CAST(issues.created_on AS DATE) BETWEEN '#{start_date}' AND '#{end_date}'))"
-            sql << "  OR ("
-            sql << "    (select count(*) from journals where journalized_type = 'Issue' AND journalized_id = issues.id"
-            sql << "      AND journals.user_id = #{user}"
-            sql << "      AND (CAST(journals.created_on AS DATE) BETWEEN '#{start_date}' AND '#{end_date}')"
-            sql << "    ) > 0"
-            sql << "  )"
-            sql << ')'
+            sql += "  (issues.author_id = #{user}"
+            sql += "   AND (CAST(issues.created_on AS DATE) BETWEEN '#{start_date}' AND '#{end_date}'))"
+            sql += "  OR ("
+            sql += "    (select count(*) from journals where journalized_type = 'Issue' AND journalized_id = issues.id"
+            sql += "      AND journals.user_id = #{user}"
+            sql += "      AND (CAST(journals.created_on AS DATE) BETWEEN '#{start_date}' AND '#{end_date}')"
+            sql += "    ) > 0"
+            sql += "  )"
+            sql += ')'
             return sql
           end
 
