@@ -157,13 +157,13 @@ module RedmineWikiLists
           redirects = WikiRedirect.where(redirects_to: obj.page.title) #別名query
 
           redirects.each do |redirect|
-            words += redirect.title #別名
+            words << redirect.title #別名
           end
         elsif obj.class == Issue  # チケットの場合はチケットsubjectを検索ワードにする
-          words += obj.subject
+          words << obj.subject
         elsif obj.class == Journal && obj.journalized_type == 'Issue'
           # チケットコメントの場合もチケット番号表記を検索ワードにする
-          words += '#'+obj.journalized_id.to_s
+          words << '#'+obj.journalized_id.to_s
         end
 
         words
