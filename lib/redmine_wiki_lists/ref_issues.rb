@@ -20,6 +20,7 @@ usage: {{ref_issues([option].., [column]..)}}<br>
 -t[=column] : display text<br>
 -l[=column] : display linked text<br>
 -c : count issues<br>
+-sum[=column] : sum column<br>
 -0 : no display if no issues
 <br>[columns]<br> {
 TEXT
@@ -197,6 +198,23 @@ TEXT
           end
         elsif parser.count_flag
           disp = @issues.size.to_s
+        elsif parser.sum_field
+          sum = 0.0
+          atr = parser.sum_field if parser.sum_field
+
+          @issues.each do |issue|
+            if issue.attributes.has_key?(atr)
+              sum = sum + issue.attributes[atr].to_f
+            else
+              issue.custom_field_values.each do |cf|
+                if 'cf_'+cf.custom_field.id.to_s == atr || cf.custom_field.name == atr
+                  sum = sum + cf.value.to_f
+                end
+              end
+            end
+          end
+
+          disp = sum.to_s
         else
           if params[:format] == 'pdf'
             disp = render(partial: 'issues/list.html', locals: {issues: @issues, query: @query})
