@@ -4,9 +4,8 @@ This plugin adds wiki macros that display issue lists.
 
 == Installation
 
-* Download zip file from https://github.com/tkusukawa/redmine_wiki_lists/releases
-* Unzip
-* Move the unziped folder into the $REDMINE/plugins/
+* cd {RAILS_ROOT}/plugins
+* git clone https://github.com/tkusukawa/redmine_wiki_lists.git
 * Restart REDMINE
 
 == Usage
