@@ -1,6 +1,7 @@
 = redmine_wiki_lists
 
 This plugin adds wiki macros that display issue lists.
+(Use only if you trust all users as there is a risk of abuse.)
 
 == Installation
 
