@@ -5,7 +5,7 @@ module RedmineWikiLists
   module RefIssues
     class Parser
       attr_reader :search_words_s, :search_words_d, :search_words_w, :columns,
-                  :custom_query_name, :custom_query_id, :additional_filter, :only_text, :only_link, :count_flag, :zero_flag
+                  :custom_query_name, :custom_query_id, :additional_filter, :only_text, :only_link, :count_flag, :zero_flag, :sum_field
 
       def initialize(obj, args = nil, project = nil)
         parse_args(obj, args, project) if args
@@ -24,6 +24,7 @@ module RedmineWikiLists
         @only_text = nil
         @count_flag = nil
         @zero_flag = nil
+        @sum_field = nil
 
         args.each do |arg|
           arg.strip!
@@ -99,6 +100,12 @@ module RedmineWikiLists
               @count_flag = true
             when '0'
               @zero_flag = true
+            when 'sum'
+              if sep
+                @sum_field = words
+              else
+                raise "- no sum field:#{arg}"
+              end
             else
               raise "- unknown option:#{arg}"
           end
